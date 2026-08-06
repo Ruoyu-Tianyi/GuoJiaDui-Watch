@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>国家队今天买了吗？—— 宽基ETF申赎监测</title>
+<style>
+  :root{
+    --paper:#F3EEE5;
+    --ink:#101010;
+    --red:#BD2F1D;
+    --green:#307927;
+    --stone:#88837C;
+    --olive:#28352C;
+    --line:#101010;
+    --serif:"Noto Serif SC","Songti SC","STSong","SimSun",serif;
+    --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+    --mono:"SF Mono","Menlo","Consolas","PingFang SC",monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+    font-size:15px;
+    line-height:1.6;
+  }
+
+  /* ---------- 刊头 ---------- */
+  .masthead{
+    background:var(--ink);
+    color:var(--paper);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:.55rem 2vw;
+    font-size:clamp(.6rem,.72vw + .28rem,.78rem);
+    letter-spacing:.1em;
+    gap:.8rem;
+    flex-wrap:wrap;
+  }
+  .masthead .left{display:flex;align-items:center;flex-wrap:wrap;row-gap:.15rem;}
+  .masthead .brand{font-weight:700;letter-spacing:.28em;font-size:clamp(.66rem,.78vw + .3rem,.82rem);white-space:nowrap;}
+  .masthead .author{
+    font-weight:700;
+    letter-spacing:.06em;
+    color:#d8d2c4;
+    margin-left:clamp(.6rem,1.4vw,1.4rem);
+    font-size:clamp(.6rem,.68vw + .26rem,.72rem);
+    white-space:nowrap;
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+  }
+  .masthead .author a{color:inherit;text-decoration:none;border-bottom:1px solid #d8d2c4;}
+  .masthead .author a.gh{
+    border-bottom:none;
+    display:inline-flex;
+    align-items:center;
+  }
+  .masthead .author a.gh svg{
+    width:clamp(13px,1.1vw + 6px,17px);
+    height:clamp(13px,1.1vw + 6px,17px);
+    fill:#d8d2c4;
+    transition:fill .2s;
+  }
+  .masthead .author a.gh:hover svg{fill:#fff;}
+  .masthead .right{white-space:nowrap;}
+  .masthead .right{color:#b9b2a4;}
+
+  .titleblock{
+    text-align:center;
+    padding:3.2rem 4vw 1.6rem;
+    border-bottom:1px solid var(--line);
+  }
+  .titleblock .kicker{
+    font-size:.72rem;letter-spacing:.5em;color:var(--stone);
+    text-transform:uppercase;margin-bottom:1rem;
+  }
+  .titleblock h1{
+    font-family:var(--serif);
+    font-weight:900;
+    font-size:clamp(2rem,5.6vw,4.6rem);
+    line-height:1.08;
+    letter-spacing:.02em;
+  }
+  .titleblock .sub{
+    margin-top:1rem;
+    color:var(--stone);
+    font-size:.85rem;
+  }
+
+  /* ---------- 今日裁决 ---------- */
+  .verdict-hero{
+    border-bottom:1px solid var(--line);
+    padding:3.4rem 4vw 3rem;
+    text-align:center;
+    position:relative;
+  }
+  .verdict-hero .q{
+    font-size:.8rem;letter-spacing:.4em;color:var(--stone);margin-bottom:1.2rem;
+  }
+  .verdict-big{
+    font-family:var(--serif);
+    font-weight:900;
+    font-size:clamp(2.6rem,9vw,8rem);
+    line-height:1.06;
+    letter-spacing:.01em;
+  }
+  .verdict-big.buy{color:var(--red);}
+  .verdict-big.sell{color:var(--green);}
+  .verdict-big.flat{color:var(--ink);}
+  .verdict-conf{
+    display:inline-block;
+    margin-top:1rem;
+    font-size:.78rem;
+    letter-spacing:.3em;
+    border:1px solid var(--line);
+    padding:.3rem 1rem .25rem;
+  }
+  .verdict-conf.buy{color:var(--red);border-color:var(--red);}
+  .verdict-conf.sell{color:var(--green);border-color:var(--green);}
+  .verdict-stats{
+    display:flex;
+    justify-content:center;
+    gap:0;
+    margin-top:2.6rem;
+    flex-wrap:wrap;
+  }
+  .vstat{
+    padding:0 2.4rem;
+    border-left:1px solid var(--line);
+    text-align:center;
+  }
+  .vstat:first-child{border-left:none;}
+  .vstat .num{
+    font-family:var(--mono);
+    font-size:clamp(1.4rem,3vw,2.2rem);
+    font-weight:700;
+  }
+  .vstat .num.buy{color:var(--red);}
+  .vstat .num.sell{color:var(--green);}
+  .vstat .lbl{font-size:.72rem;color:var(--stone);letter-spacing:.15em;margin-top:.2rem;}
+  .verdict-note{
+    margin-top:2rem;
+    font-size:.78rem;
+    color:var(--stone);
+  }
+  .verdict-note b{color:var(--ink);}
+
+  /* ---------- 规则条 ---------- */
+  .rule{
+    border-bottom:1px solid var(--line);
+    padding:1.1rem 4vw;
+    display:flex;
+    justify-content:space-between;
+    gap:2rem;
+    flex-wrap:wrap;
+    font-size:.78rem;
+    color:var(--stone);
+  }
+  .rule b{color:var(--ink);font-weight:600;}
+  .rule .center{flex:1;text-align:center;}
+  .rule .right{margin-left:auto;}
+
+  /* ---------- 双屏翻页 ---------- */
+  html.lock,body.lock{overflow:hidden;height:100%;}
+  #screen-home,#screen-data{
+    will-change:transform,opacity;
+    transition:transform .75s cubic-bezier(.77,0,.18,1),opacity .6s ease;
+  }
+  /* 数据屏：初始滑到视口下方，始终挂载保证布局一次完成 */
+  #screen-data{
+    position:fixed;
+    inset:0;
+    overflow-y:auto;
+    background:var(--paper);
+    transform:translateY(100vh);
+    opacity:0;
+    pointer-events:none;
+  }
+  body.show-data #screen-data{
+    transform:translateY(0);
+    opacity:1;
+    pointer-events:auto;
+  }
+  body.show-data #screen-home{
+    transform:translateY(-12vh);
+    opacity:0;
+    pointer-events:none;
+  }
+  /* 首屏：一屏自适应 */
+  #screen-home{
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    overflow-y:auto; /* 极矮屏幕兜底 */
+  }
+  #screen-home .titleblock{
+    padding:clamp(.8rem,3vh,2.6rem) 4vw clamp(.6rem,1.6vh,1.4rem);
+  }
+  #screen-home .titleblock h1{
+    font-size:clamp(1.6rem,min(4.2vw,5.4vh),3.4rem);
+  }
+  #screen-home .titleblock .sub{margin-top:.5rem;font-size:.8rem;}
+  #screen-home .titleblock .kicker{margin-bottom:.5rem;}
+  #screen-home .verdict-hero{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:0 4vw;
+  }
+  #screen-home .verdict-big{
+    font-size:clamp(2.4rem,min(8vw,12vh),6.4rem);
+  }
+  #screen-home .verdict-hero .q{margin-bottom:.5rem;}
+  #screen-home .verdict-conf{margin-top:.7rem;}
+  #screen-home .verdict-stats{margin-top:clamp(.8rem,2.4vh,2rem);}
+  #screen-home .vstat .num{font-size:clamp(1.2rem,min(2.6vw,3.6vh),1.9rem);}
+  #screen-home .cats{
+    margin-top:clamp(.8rem,2.4vh,2rem);
+    width:min(1100px,92vw);
+    margin-left:auto;
+    margin-right:auto;
+  }
+  #screen-home .cat{padding:clamp(.45rem,1.4vh,.9rem) .5rem;}
+  #screen-home .cat .val{font-size:clamp(.95rem,min(1.7vw,2.6vh),1.35rem);}
+  #screen-home .verdict-note{margin-top:clamp(.6rem,1.8vh,1.4rem);}
+  #screen-home .rule{padding:.7rem 4vw;}
+  #screen-home .pager-hint{padding:.9rem 0 1.2rem;}
+  .pager-hint{
+    text-align:center;
+    padding:1.6rem 0 2.2rem;
+    font-size:.72rem;
+    letter-spacing:.3em;
+    color:var(--stone);
+    cursor:pointer;
+    user-select:none;
+  }
+  .pager-hint .chev{
+    display:block;
+    font-size:1.1rem;
+    letter-spacing:0;
+    animation:bob 1.8s ease-in-out infinite;
+  }
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+  .pager-top{
+    text-align:center;
+    padding:1.6rem 0 0;
+    font-size:.72rem;
+    letter-spacing:.3em;
+    color:var(--stone);
+    cursor:pointer;
+    user-select:none;
+  }
+  .pager-top .chev{display:block;font-size:1.1rem;letter-spacing:0;animation:bobUp 1.8s ease-in-out infinite;}
+  @keyframes bobUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+  /* ---------- 分类卡片 ---------- */
+  .cats{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:1px;
+    background:#10101040;
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    margin-top:2.6rem;
+  }
+  .cat{
+    background:var(--paper);
+    padding:1rem .5rem .9rem;
+    text-align:center;
+  }
+  .cat .nm{font-size:.72rem;letter-spacing:.18em;color:var(--stone);}
+  .cat .val{
+    font-family:var(--mono);
+    font-size:clamp(1.05rem,1.9vw,1.5rem);
+    font-weight:700;
+    margin-top:.3rem;
+  }
+  .cat .val.buy{color:var(--red);}
+  .cat .val.sell{color:var(--green);}
+  .cat .val.na{color:var(--stone);font-weight:400;}
+  .cat .cnt{font-size:.62rem;color:var(--stone);margin-top:.15rem;font-family:var(--mono);}
+
+  /* ---------- 图表 ---------- */
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    padding:2.6rem 4vw 1rem;
+  }
+  .section-head h2{
+    font-family:var(--serif);
+    font-weight:900;
+    font-size:clamp(1.3rem,2.6vw,2rem);
+  }
+  .section-head .hint{font-size:.72rem;color:var(--stone);letter-spacing:.1em;}
+  .chart-wrap{
+    padding:0 4vw 1rem;
+  }
+  .chart-note{font-size:.72rem;color:var(--stone);padding:.6rem 4vw 0;}
+  #chart{width:100%;height:auto;display:block;}
+  #chart text{font-family:var(--mono);fill:var(--stone);}
+  .bar{transition:opacity .15s;}
+  .bar:hover{opacity:.72;cursor:crosshair;}
+
+  /* ---------- 明细表 ---------- */
+  .table-wrap{
+    margin:2.6rem 1vw 0;
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    overflow-x:auto;
+  }
+  table.grid{
+    width:100%;
+    border-collapse:collapse;
+    font-family:var(--mono);
+    font-size:.82rem;
+  }
+  table.grid.heat{font-size:clamp(.82rem,.55vw + .72rem,1.3rem);font-weight:600;}
+  table.grid.heat th{font-size:clamp(.62rem,.3vw + .58rem,.92rem);letter-spacing:clamp(.08em,.15vw,.22em);font-weight:600;}
+  table.grid.heat td{padding:clamp(.45rem,.35vw + .4rem,.95rem) clamp(.4rem,.3vw + .35rem,.8rem);}
+  table.grid th{
+    font-family:var(--sans);
+    font-size:.7rem;
+    letter-spacing:.18em;
+    color:var(--stone);
+    font-weight:600;
+    text-align:left;
+    padding:.7rem .8rem .55rem;
+    border-bottom:1px solid var(--line);
+    white-space:nowrap;
+  }
+  table.grid td{
+    border-bottom:1px solid #10101026;
+    padding:.62rem .8rem;
+    white-space:nowrap;
+  }
+  table.grid tr.dayrow{cursor:pointer;}
+  table.grid tr.dayrow:hover{background:#10101009;}
+  table.grid tr.dayrow.open{background:#10101006;}
+  td.buy,span.buy{color:var(--red);}
+  td.sell,span.sell{color:var(--green);}
+  td.flat{color:var(--ink);}
+  .chip{
+    display:inline-block;
+    font-family:var(--sans);
+    font-size:.68rem;
+    letter-spacing:.12em;
+    border:1px solid currentColor;
+    padding:.08rem .5rem .02rem;
+  }
+  .chip.buy{color:var(--red);}
+  .chip.sell{color:var(--green);}
+  .chip.flat{color:var(--stone);border-color:var(--stone);}
+  .arrow{font-family:var(--sans);color:var(--stone);display:inline-block;transition:transform .25s;}
+  tr.open .arrow{transform:rotate(90deg);}
+  tr.detail td{
+    background:#10101006;
+    padding:0 .8rem;
+    white-space:normal;
+  }
+  .detail-inner{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+    gap:1px;
+    background:#10101026;
+    border:1px solid #10101026;
+    margin:.8rem 0;
+  }
+  .etf-cell{
+    background:var(--paper);
+    padding:.7rem .9rem;
+    font-size:.76rem;
+  }
+  .etf-cell .nm{font-family:var(--sans);font-weight:600;}
+  .etf-cell .tag{
+    font-family:var(--sans);
+    font-size:.62rem;
+    color:var(--stone);
+    border:1px solid var(--stone);
+    padding:0 .35rem;
+    margin-left:.4rem;
+  }
+  .etf-cell .row2{margin-top:.3rem;display:flex;justify-content:space-between;font-family:var(--mono);}
+  .na{color:var(--stone);font-style:normal;}
+
+  /* ---------- 方法 ---------- */
+  .method{
+    padding:clamp(1.8rem,2vw + 1rem,3rem) 4vw 2rem;
+    display:flex;
+    flex-direction:column;
+    gap:clamp(1.6rem,1.2vw + 1.2rem,2.6rem);
+    max-width:clamp(720px,72vw,1680px);
+    margin-left:auto;
+    margin-right:auto;
+  }
+  .method h3{
+    font-family:var(--serif);
+    font-weight:900;
+    font-size:clamp(.92rem,.6vw + .78rem,1.3rem);
+    margin-bottom:clamp(.55rem,.4vw + .45rem,.9rem);
+    border-bottom:1px solid var(--line);
+    padding-bottom:.5rem;
+  }
+  .method p,.method li{font-size:clamp(.72rem,.45vw + .6rem,1.05rem);color:#3a3a38;}
+  .method ol{padding-left:1.2rem;}
+  .method li{margin-bottom:.5rem;}
+  .method code{
+    font-family:var(--mono);
+    background:#10101010;
+    padding:.05rem .35rem;
+    font-size:.92em;
+    word-break:break-all;
+  }
+  /* 监测篮子：分组网格，宽度随模块撑满 */
+  .basket{display:flex;flex-direction:column;gap:1px;margin-top:.8rem;border:1px solid var(--line);background:#10101026;}
+  .bk-row{display:grid;grid-template-columns:clamp(5.5rem,8vw,8rem) 1fr;background:var(--paper);}
+  .bk-cat{
+    font-weight:700;
+    font-size:clamp(.68rem,.45vw + .58rem,.92rem);
+    letter-spacing:.12em;
+    padding:.7rem .8rem;
+    border-right:1px solid #10101026;
+    display:flex;
+    align-items:center;
+    white-space:nowrap;
+  }
+  .bk-items{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:1px;
+    background:var(--paper);
+  }
+  @media (max-width:1200px){.bk-items{grid-template-columns:repeat(4,1fr);}}
+  .bk-item{
+    background:var(--paper);
+    border-right:1px solid #10101026;
+    border-bottom:1px solid #10101026;
+    padding:.55rem .7rem;
+    font-family:var(--mono);
+    font-size:clamp(.6rem,.42vw + .5rem,.82rem);
+    letter-spacing:.02em;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:.1rem;
+  }
+  .bk-item .cd{font-weight:700;}
+  .bk-item .nm{color:#3a3a38;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bk-item .sz{color:var(--stone);font-size:.86em;}
+  @media (max-width:900px){.bk-items{grid-template-columns:repeat(3,1fr);}}
+  @media (max-width:640px){
+    .bk-row{grid-template-columns:4.6rem 1fr;}
+    .bk-items{grid-template-columns:repeat(2,1fr);}
+    .bk-cat{font-size:.66rem;padding:.55rem .5rem;letter-spacing:.06em;}
+  }
+
+  footer{
+    border-top:1px solid var(--line);
+    margin-top:2rem;
+    padding:1.4rem 4vw 2.4rem;
+    font-size:.72rem;
+    color:var(--stone);
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:1rem;
+  }
+  a.u{
+    color:inherit;
+    text-decoration:none;
+    background-image:linear-gradient(currentColor,currentColor);
+    background-size:0% 1px;
+    background-repeat:no-repeat;
+    background-position:left 100%;
+    transition:background-size 1.2s cubic-bezier(.86,0,.07,1);
+    padding-bottom:2px;
+  }
+  a.u:hover{background-size:100% 1px;}
+
+  /* ---------- 浮层提示 ---------- */
+  #tooltip{
+    position:fixed;
+    pointer-events:none;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:var(--mono);
+    font-size:.72rem;
+    padding:.45rem .7rem;
+    display:none;
+    z-index:99;
+    white-space:pre;
+  }
+
+  @media (max-width:640px){
+    .cats{grid-template-columns:repeat(2,1fr);}
+    .vstat{padding:0 1.1rem;}
+    .rule{gap:.6rem;}
+    .masthead{letter-spacing:.04em;font-size:.6rem;}
+    .masthead .brand{letter-spacing:.18em;font-size:.66rem;}
+    .masthead .author{font-size:.6rem;}
+  }
+</style>
+</head>
+<body class="lock">
+
+<div class="masthead">
+  <div class="left"><span class="brand">GUOJIADUI WATCH</span><span class="author">作者：若瑜 ｜ Email：<a href="mailto:ruoyu_tianyi@163.com">ruoyu_tianyi@163.com</a> ｜ <a class="gh" href="https://github.com/Ruoyu-Tianyi/GuoJiaDui-Watch" target="_blank" rel="noopener" aria-label="GitHub: GuoJiaDui-Watch"><svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></a></span></div>
+  <div class="right" id="mh-date"></div>
+</div>
+
+<div id="screen-home">
+<div class="titleblock">
+  <div class="kicker">宽基ETF申赎 · 每日监测</div>
+  <h1>国家队今天买了吗？</h1>
+  <div class="sub">以汇金核心持仓宽基ETF的异常申购赎回为信号，推测"国家队"的每日动向</div>
+</div>
+
+<div class="verdict-hero" id="hero"></div>
+
+<div class="rule" id="rule"></div>
+
+<div class="pager-hint" id="go-data"><span>查看近30日数据与明细</span><span class="chev">﹀</span></div>
+</div><!-- /screen-home -->
+
+<div id="screen-data">
+<div class="pager-top" id="go-home"><span class="chev">︿</span><span>返回今日裁决</span></div>
+
+<div class="section-head">
+  <h2>近30个交易日 · 汇总净申赎</h2>
+  <div class="hint">单位：亿元（估算） · 红柱=净申购 / 绿柱=净赎回 · 悬停查看分类数值</div>
+</div>
+<div class="chart-wrap"><svg id="chart"></svg></div>
+<div class="chart-note" id="chart-note"></div>
+
+<div class="section-head">
+  <h2>近30个交易日 · 分类净申赎热力表</h2>
+  <div class="hint">单位：亿元（估算）</div>
+</div>
+<div class="table-wrap" id="heatwrap">
+  <table class="grid heat">
+    <thead>
+      <tr>
+        <th>日期</th>
+        <th>上证50</th>
+        <th>沪深300</th>
+        <th>中证500</th>
+        <th>中证1000</th>
+        <th>中证2000</th>
+        <th>科创50</th>
+        <th>合计</th>
+      </tr>
+    </thead>
+    <tbody id="heatbody"></tbody>
+  </table>
+</div>
+
+<div class="section-head">
+  <h2>逐日明细</h2>
+  <div class="hint">点击任意一行，展开当日分类汇总与29只ETF申赎分解</div>
+</div>
+<div class="table-wrap">
+  <table class="grid">
+    <thead>
+      <tr>
+        <th style="width:2rem"></th>
+        <th>日期</th>
+        <th>结论</th>
+        <th>汇总净申赎(亿)</th>
+        <th>放量申购</th>
+        <th>放量赎回</th>
+        <th>数据</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<div class="method">
+  <div>
+    <h3>监测篮子</h3>
+    <p>中央汇金历次公告与年报确认其持续增持宽基ETF。本站覆盖六大方向<strong>各自规模最大的前5只ETF（创业板方向不纳入监测）</strong>（共29只；中证500方向规模靠前的ETF仅4只，按实际只数纳入）：</p>
+    <div class="basket" id="basket"></div>
+  </div>
+  <div>
+    <h3>判定方法</h3>
+    <ol>
+      <li>每日净申赎估算：<code>T = Σ(当日份额变动 × 当日估算净值)</code>，单位亿元；净值以"规模÷份额"近似。分方向呈现：上证50 / 沪深300 / 中证500 / 中证1000 / 中证2000 / 科创50 各自前5大ETF的分类净申赎。</li>
+      <li>绝对值法判定：<code>T ≥ +100亿</code> → "大概率买了"；<code>+50亿 ≤ T &lt; +100亿</code> → "疑似净买入"；<code>T ≤ -100亿</code> → "大概率卖了"；<code>-100亿 &lt; T ≤ -50亿</code> → "疑似净卖出"；<code>|T| &lt; 50亿</code> → "未见明显动作"。</li>
+      <li>ETF份额数据于<strong>T+1</strong>披露，故本站结论始终对应"最近一个有完整数据的交易日"。</li>
+    </ol>
+  </div>
+  <div>
+    <h3>局限与声明</h3>
+    <p>· 申赎来自全部市场参与者，异常放量只是国家队行为的<strong>间接代理指标</strong>，套利资金、机构调仓同样会造成大额申赎，结论仅供参考。</p>
+    <p style="margin-top:.5rem">· 数据为页面生成时点（2026-07-28）抓取的静态快照，覆盖至2026-07-27收盘，不会自动更新。</p>
+    <p style="margin-top:.5rem">· 本站不构成任何投资建议。市场有风险，决策需独立。</p>
+  </div>
+</div>
+
+<footer>
+  <div>数据来源：恒生聚源 Gildata · ETF基金份额变动（截至2026-07-27）<br>
+  <span style="font-size:.66rem">热力表单位：亿元 · 深红=大额净申购 / 深绿=大额净赎回 / "—"=当日数据未更新</span><br>
+  <span style="font-size:.66rem">权利声明：本站由若瑜（Ruoyu-Tianyi）制作并保留所有权利；页面内容仅供学习与研究参考，版权归作者所有，未经许可不得用于商业用途。</span></div>
+  <div><a class="u" href="#" id="foot-home">回到今日结论</a> · GUOJIADUI WATCH</div>
+</footer>
+</div><!-- /screen-data -->
+
+<div id="tooltip"></div>
+
+<script>
+const DATA = {"asof": "2026-07-27", "generated": "2026-07-28", "n_etf": 29, "basket": {"510050": {"name": "华夏上证50ETF", "cat": "上证50", "aum_yi": 233.0}, "510100": {"name": "易方达上证50ETF", "cat": "上证50", "aum_yi": 39.0}, "530000": {"name": "天弘上证50ETF", "cat": "上证50", "aum_yi": 16.0}, "510710": {"name": "博时上证50ETF", "cat": "上证50", "aum_yi": 5.0}, "510800": {"name": "建信上证50ETF", "cat": "上证50", "aum_yi": 3.0}, "510300": {"name": "华泰柏瑞沪深300ETF", "cat": "沪深300", "aum_yi": 1173.0}, "510310": {"name": "易方达沪深300ETF", "cat": "沪深300", "aum_yi": 525.0}, "510330": {"name": "华夏沪深300ETF", "cat": "沪深300", "aum_yi": 426.0}, "159919": {"name": "嘉实沪深300ETF", "cat": "沪深300", "aum_yi": 312.0}, "510360": {"name": "广发沪深300ETF", "cat": "沪深300", "aum_yi": 34.0}, "510500": {"name": "南方中证500ETF", "cat": "中证500", "aum_yi": 474.0}, "159922": {"name": "嘉实中证500ETF", "cat": "中证500", "aum_yi": 93.0}, "512500": {"name": "华夏中证500ETF", "cat": "中证500", "aum_yi": 84.0}, "159935": {"name": "景顺长城中证500ETF", "cat": "中证500", "aum_yi": 1.0}, "512100": {"name": "南方中证1000ETF", "cat": "中证1000", "aum_yi": 276.0}, "560010": {"name": "广发中证1000ETF", "cat": "中证1000", "aum_yi": 69.0}, "159845": {"name": "华夏中证1000ETF", "cat": "中证1000", "aum_yi": 105.0}, "159629": {"name": "富国中证1000ETF", "cat": "中证1000", "aum_yi": 22.0}, "159633": {"name": "易方达中证1000ETF", "cat": "中证1000", "aum_yi": 42.0}, "563300": {"name": "华泰柏瑞中证2000ETF", "cat": "中证2000", "aum_yi": 57.0}, "159531": {"name": "南方中证2000ETF", "cat": "中证2000", "aum_yi": 13.0}, "159532": {"name": "易方达中证2000ETF", "cat": "中证2000", "aum_yi": 3.0}, "560220": {"name": "广发中证2000ETF", "cat": "中证2000", "aum_yi": 1.0}, "159536": {"name": "汇添富中证2000ETF", "cat": "中证2000", "aum_yi": 1.0}, "588000": {"name": "华夏上证科创板50成份ETF", "cat": "科创50", "aum_yi": 879.0}, "588080": {"name": "易方达上证科创板50ETF", "cat": "科创50", "aum_yi": 423.0}, "588050": {"name": "科创50ETF工银", "cat": "科创50", "aum_yi": 109.0}, "588060": {"name": "广发科创50ETF", "cat": "科创50", "aum_yi": 78.0}, "588090": {"name": "华泰柏瑞上证科创板50成份ETF", "cat": "科创50", "aum_yi": 52.0}}, "records": [{"date": "2026-07-27", "total_yi": 125.99, "verdict": "买了", "confidence": "大概率", "buy_count": 10, "sell_count": 4, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": 4.09, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": 21.49, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": 42.03, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": 44.1, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": 0.57, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": 13.71, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": 5.48, "pct": 2.41, "d_shares_wan": 17910.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": -1.87, "pct": -4.59, "d_shares_wan": -6210.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": 0.48, "pct": 3.01, "d_shares_wan": 3400.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": 12.42, "pct": 1.07, "d_shares_wan": 26100.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": 3.49, "pct": 0.67, "d_shares_wan": 7560.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": 3.08, "pct": 0.73, "d_shares_wan": 6210.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": 2.28, "pct": 0.74, "d_shares_wan": 4590.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 0.22, "pct": 0.65, "d_shares_wan": 1200.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": 35.25, "pct": 8.03, "d_shares_wan": 45600.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": 4.23, "pct": 4.76, "d_shares_wan": 13500.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": 2.55, "pct": 3.13, "d_shares_wan": 5840.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": 30.21, "pct": 12.31, "d_shares_wan": 103200.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 3.12, "pct": 4.75, "d_shares_wan": 10400.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": 9.65, "pct": 10.09, "d_shares_wan": 32100.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": -0.24, "pct": -1.09, "d_shares_wan": -800.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": 1.36, "pct": 3.33, "d_shares_wan": 4400.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": 0.98, "pct": 1.76, "d_shares_wan": 7500.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": -0.24, "pct": -1.84, "d_shares_wan": -1800.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": -0.12, "pct": -4.31, "d_shares_wan": -800.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": -0.05, "pct": -5.95, "d_shares_wan": -400.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": 10.18, "pct": 1.17, "d_shares_wan": 53400.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": 2.39, "pct": 0.57, "d_shares_wan": 12900.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": 0.26, "pct": 0.24, "d_shares_wan": 1400.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 0.21, "pct": 0.27, "d_shares_wan": 1800.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": 0.67, "pct": 1.31, "d_shares_wan": 3600.0, "aum_yi": 52.0}]}, {"date": "2026-07-24", "total_yi": -4.52, "verdict": "无动作", "confidence": "", "buy_count": 5, "sell_count": 6, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": -10.45, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": 27.05, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": -3.29, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": -8.92, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": 0.09, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": -9.0, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": -11.93, "pct": -4.98, "d_shares_wan": -38970.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": 1.92, "pct": 4.96, "d_shares_wan": 6390.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": -0.29, "pct": -1.82, "d_shares_wan": -2100.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": -0.12, "pct": -2.49, "d_shares_wan": -270.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": -0.03, "pct": -1.11, "d_shares_wan": -200.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": 16.64, "pct": 1.47, "d_shares_wan": 35370.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": 4.4, "pct": 0.86, "d_shares_wan": 9630.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": 3.13, "pct": 0.75, "d_shares_wan": 6390.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": 2.56, "pct": 0.84, "d_shares_wan": 5220.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 0.32, "pct": 0.99, "d_shares_wan": 1800.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": -4.01, "pct": -0.93, "d_shares_wan": -5320.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": 0.4, "pct": 0.46, "d_shares_wan": 1300.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": 0.37, "pct": 0.47, "d_shares_wan": 880.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": -0.05, "pct": -6.33, "d_shares_wan": -200.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": -6.91, "pct": -2.83, "d_shares_wan": -24400.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": -2.62, "pct": -2.75, "d_shares_wan": -9000.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": 0.76, "pct": 3.67, "d_shares_wan": 2600.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": -0.15, "pct": -0.38, "d_shares_wan": -500.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": -0.06, "pct": -0.12, "d_shares_wan": -500.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": 0.03, "pct": 0.21, "d_shares_wan": 200.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.12, "pct": 4.51, "d_shares_wan": 800.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": -11.03, "pct": -1.27, "d_shares_wan": -58500.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": -1.86, "pct": -0.45, "d_shares_wan": -10200.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": 2.34, "pct": 2.23, "d_shares_wan": 12800.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 1.22, "pct": 1.62, "d_shares_wan": 10800.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": 0.33, "pct": 0.66, "d_shares_wan": 1800.0, "aum_yi": 52.0}]}, {"date": "2026-07-23", "total_yi": 67.97, "verdict": "买了", "confidence": "疑似", "buy_count": 8, "sell_count": 4, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": 15.11, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": 4.76, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": -3.81, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": -0.45, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": 2.58, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": 49.77, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": 10.94, "pct": 4.74, "d_shares_wan": 35460.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": 4.19, "pct": 12.04, "d_shares_wan": 13860.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": -0.01, "pct": -0.09, "d_shares_wan": -100.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": -0.01, "pct": -0.28, "d_shares_wan": -30.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": -0.86, "pct": -0.07, "d_shares_wan": -1800.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": 1.0, "pct": 0.19, "d_shares_wan": 2160.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": 4.4, "pct": 1.05, "d_shares_wan": 8820.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": 0.49, "pct": 0.16, "d_shares_wan": 990.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": -0.27, "pct": -0.82, "d_shares_wan": -1500.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": -4.12, "pct": -0.92, "d_shares_wan": -5320.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": 0.88, "pct": 1.0, "d_shares_wan": 2800.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": -0.52, "pct": -0.64, "d_shares_wan": -1200.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": -0.05, "pct": -5.96, "d_shares_wan": -200.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": -1.34, "pct": -0.53, "d_shares_wan": -4600.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 1.19, "pct": 1.86, "d_shares_wan": 4000.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": 0.72, "pct": 0.74, "d_shares_wan": 2400.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": -1.02, "pct": -4.57, "d_shares_wan": -3400.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": 3.04, "pct": 5.84, "d_shares_wan": 23500.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": -0.34, "pct": -2.6, "d_shares_wan": -2600.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": -0.12, "pct": -4.31, "d_shares_wan": -800.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": 33.69, "pct": 4.02, "d_shares_wan": 178500.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": 5.49, "pct": 1.33, "d_shares_wan": 30000.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": 6.88, "pct": 7.0, "d_shares_wan": 37600.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 2.72, "pct": 3.74, "d_shares_wan": 24000.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": 0.99, "pct": 2.01, "d_shares_wan": 5400.0, "aum_yi": 52.0}]}, {"date": "2026-07-22", "total_yi": -189.81, "verdict": "卖了", "confidence": "大概率", "buy_count": 0, "sell_count": 16, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": 0.37, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": -16.48, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": -34.63, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": -106.58, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": -4.82, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": -27.69, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": -0.03, "pct": -0.01, "d_shares_wan": -90.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": 0.49, "pct": 1.43, "d_shares_wan": 1620.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": -0.06, "pct": -0.35, "d_shares_wan": -400.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": 0.01, "pct": 0.28, "d_shares_wan": 30.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": -0.04, "pct": -1.63, "d_shares_wan": -300.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": -14.9, "pct": -1.28, "d_shares_wan": -31230.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": 0.88, "pct": 0.17, "d_shares_wan": 1890.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": -1.12, "pct": -0.27, "d_shares_wan": -2250.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": -0.63, "pct": -0.2, "d_shares_wan": -1260.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": -0.71, "pct": -2.09, "d_shares_wan": -3900.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": -27.44, "pct": -5.76, "d_shares_wan": -35360.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": -4.62, "pct": -5.0, "d_shares_wan": -14700.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": -2.52, "pct": -2.99, "d_shares_wan": -5760.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": -0.05, "pct": -5.62, "d_shares_wan": -200.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": -58.61, "pct": -18.91, "d_shares_wan": -202200.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": -7.54, "pct": -10.57, "d_shares_wan": -25400.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": -26.13, "pct": -21.31, "d_shares_wan": -87900.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": -3.58, "pct": -13.9, "d_shares_wan": -12000.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": -10.72, "pct": -20.99, "d_shares_wan": -35200.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": -4.27, "pct": -7.68, "d_shares_wan": -33500.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": -0.4, "pct": -3.1, "d_shares_wan": -3200.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": -0.15, "pct": -5.11, "d_shares_wan": -1000.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": -22.6, "pct": -2.53, "d_shares_wan": -115200.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": -1.43, "pct": -0.33, "d_shares_wan": -7500.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": -1.33, "pct": -1.29, "d_shares_wan": -7000.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": -1.7, "pct": -2.19, "d_shares_wan": -14400.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": -0.63, "pct": -1.22, "d_shares_wan": -3300.0, "aum_yi": 52.0}]}, {"date": "2026-07-21", "total_yi": 1.07, "verdict": "无动作", "confidence": "", "buy_count": 10, "sell_count": 5, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": -26.12, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": -4.18, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": -2.89, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": 10.27, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": 15.17, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": 8.81, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": -26.06, "pct": -10.17, "d_shares_wan": -84600.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": -0.71, "pct": -2.02, "d_shares_wan": -2340.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": 0.69, "pct": 4.42, "d_shares_wan": 4900.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": -0.01, "pct": -0.28, "d_shares_wan": -30.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": -0.03, "pct": -1.08, "d_shares_wan": -200.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": -3.11, "pct": -0.27, "d_shares_wan": -6480.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": 5.82, "pct": 1.14, "d_shares_wan": 12510.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": 0.81, "pct": 0.19, "d_shares_wan": 1620.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": -8.96, "pct": -2.81, "d_shares_wan": -17910.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 1.26, "pct": 3.83, "d_shares_wan": 6900.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": -2.5, "pct": -0.52, "d_shares_wan": -3200.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": 0.03, "pct": 0.03, "d_shares_wan": 100.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": -0.49, "pct": -0.58, "d_shares_wan": -1120.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.07, "pct": 9.21, "d_shares_wan": 300.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": 7.23, "pct": 2.35, "d_shares_wan": 24600.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 8.0, "pct": 12.45, "d_shares_wan": 26600.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": -0.63, "pct": -0.51, "d_shares_wan": -2100.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": -1.27, "pct": -4.64, "d_shares_wan": -4200.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": -3.06, "pct": -5.57, "d_shares_wan": -9900.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": 12.64, "pct": 28.79, "d_shares_wan": 97500.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": 1.97, "pct": 17.53, "d_shares_wan": 15400.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.47, "pct": 19.56, "d_shares_wan": 3200.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.04, "pct": 4.94, "d_shares_wan": 300.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.05, "pct": 6.32, "d_shares_wan": 400.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": 9.21, "pct": 1.02, "d_shares_wan": 45900.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": -1.05, "pct": -0.24, "d_shares_wan": -5400.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": 0.93, "pct": 0.89, "d_shares_wan": 4800.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 0.36, "pct": 0.46, "d_shares_wan": 3000.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": -0.64, "pct": -1.2, "d_shares_wan": -3300.0, "aum_yi": 52.0}]}, {"date": "2026-07-20", "total_yi": 373.14, "verdict": "买了", "confidence": "大概率", "buy_count": 24, "sell_count": 1, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": 4.22, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": 157.86, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": 16.55, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": 34.1, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": 7.04, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": 153.37, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": 2.55, "pct": 1.03, "d_shares_wan": 8460.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": 1.36, "pct": 4.13, "d_shares_wan": 4590.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": 0.12, "pct": 0.82, "d_shares_wan": 900.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": 0.18, "pct": 4.03, "d_shares_wan": 420.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": 0.01, "pct": 0.54, "d_shares_wan": 100.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": 125.83, "pct": 12.46, "d_shares_wan": 270540.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": 17.97, "pct": 3.75, "d_shares_wan": 39780.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": 6.5, "pct": 1.62, "d_shares_wan": 13410.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": 6.55, "pct": 2.16, "d_shares_wan": 13500.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 1.01, "pct": 3.27, "d_shares_wan": 5700.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": 18.44, "pct": 4.2, "d_shares_wan": 24880.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": -4.32, "pct": -4.67, "d_shares_wan": -14400.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": 2.38, "pct": 3.02, "d_shares_wan": 5680.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.05, "pct": 6.54, "d_shares_wan": 200.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": 19.91, "pct": 7.25, "d_shares_wan": 70600.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 5.43, "pct": 9.65, "d_shares_wan": 18800.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": -1.56, "pct": -1.29, "d_shares_wan": -5400.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": 3.6, "pct": 15.87, "d_shares_wan": 12400.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": 6.72, "pct": 14.65, "d_shares_wan": 22700.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": 5.51, "pct": 14.84, "d_shares_wan": 43750.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": 1.27, "pct": 13.13, "d_shares_wan": 10200.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.17, "pct": 7.92, "d_shares_wan": 1200.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.04, "pct": 5.2, "d_shares_wan": 300.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.05, "pct": 6.75, "d_shares_wan": 400.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": 138.28, "pct": 20.39, "d_shares_wan": 762900.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": 10.81, "pct": 2.79, "d_shares_wan": 61500.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": 1.58, "pct": 1.7, "d_shares_wan": 9000.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 1.96, "pct": 2.83, "d_shares_wan": 18000.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": 0.74, "pct": 1.55, "d_shares_wan": 4200.0, "aum_yi": 52.0}]}, {"date": "2026-07-17", "total_yi": 311.26, "verdict": "买了", "confidence": "大概率", "buy_count": 22, "sell_count": 2, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": 2.57, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": 167.35, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": 11.83, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": 50.16, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": 7.48, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": 71.87, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": 2.56, "pct": 1.07, "d_shares_wan": 8730.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": -0.1, "pct": -0.32, "d_shares_wan": -360.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": 0.05, "pct": 0.37, "d_shares_wan": 400.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": 0.03, "pct": 0.58, "d_shares_wan": 60.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": 0.03, "pct": 1.1, "d_shares_wan": 200.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": 92.35, "pct": 10.23, "d_shares_wan": 201510.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": 28.99, "pct": 6.54, "d_shares_wan": 65160.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": 17.32, "pct": 4.6, "d_shares_wan": 36270.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": 26.55, "pct": 9.77, "d_shares_wan": 55530.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 2.14, "pct": 7.6, "d_shares_wan": 12300.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": 15.16, "pct": 3.52, "d_shares_wan": 20160.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": -5.76, "pct": -5.77, "d_shares_wan": -18900.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": 2.38, "pct": 3.07, "d_shares_wan": 5600.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.05, "pct": 7.0, "d_shares_wan": 200.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": 30.07, "pct": 11.9, "d_shares_wan": 103600.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 2.56, "pct": 4.62, "d_shares_wan": 8600.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": 9.23, "pct": 7.97, "d_shares_wan": 31000.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": 1.01, "pct": 4.55, "d_shares_wan": 3400.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": 7.29, "pct": 18.24, "d_shares_wan": 23900.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": 5.58, "pct": 16.72, "d_shares_wan": 42250.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": 1.64, "pct": 19.37, "d_shares_wan": 12600.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.21, "pct": 10.18, "d_shares_wan": 1400.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.08, "pct": 11.6, "d_shares_wan": 600.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": -0.03, "pct": -3.26, "d_shares_wan": -200.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": 50.25, "pct": 8.02, "d_shares_wan": 277800.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": 13.42, "pct": 3.59, "d_shares_wan": 76500.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": 2.24, "pct": 2.47, "d_shares_wan": 12800.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 4.17, "pct": 6.43, "d_shares_wan": 38400.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": 1.79, "pct": 3.92, "d_shares_wan": 10200.0, "aum_yi": 52.0}]}, {"date": "2026-07-16", "total_yi": 248.76, "verdict": "买了", "confidence": "大概率", "buy_count": 22, "sell_count": 0, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": 28.0, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": 84.54, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": 40.36, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": 73.64, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": 0.95, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": 21.24, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": 26.73, "pct": 12.26, "d_shares_wan": 89010.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": 1.19, "pct": 3.77, "d_shares_wan": 4050.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": 0.04, "pct": 0.88, "d_shares_wan": 90.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": 0.04, "pct": 1.67, "d_shares_wan": 300.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": 62.01, "pct": 7.1, "d_shares_wan": 130590.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": 9.96, "pct": 2.21, "d_shares_wan": 21600.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": 6.15, "pct": 1.6, "d_shares_wan": 12420.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": 5.66, "pct": 2.05, "d_shares_wan": 11430.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 0.76, "pct": 2.66, "d_shares_wan": 4200.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": 22.72, "pct": 5.25, "d_shares_wan": 28560.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": 16.32, "pct": 18.28, "d_shares_wan": 50600.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": 1.22, "pct": 1.51, "d_shares_wan": 2720.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.1, "pct": 16.28, "d_shares_wan": 400.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": 35.83, "pct": 15.37, "d_shares_wan": 116000.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 6.39, "pct": 12.16, "d_shares_wan": 20200.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": 20.91, "pct": 20.43, "d_shares_wan": 66000.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": 3.24, "pct": 15.81, "d_shares_wan": 10200.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": 7.27, "pct": 20.62, "d_shares_wan": 22400.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": 0.67, "pct": 1.92, "d_shares_wan": 4750.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": 0.22, "pct": 2.52, "d_shares_wan": 1600.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.06, "pct": 2.99, "d_shares_wan": 400.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": 15.37, "pct": 2.33, "d_shares_wan": 78900.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": 3.57, "pct": 0.9, "d_shares_wan": 18900.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": 0.98, "pct": 1.01, "d_shares_wan": 5200.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 1.26, "pct": 1.84, "d_shares_wan": 10800.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": 0.06, "pct": 0.12, "d_shares_wan": 300.0, "aum_yi": 52.0}]}, {"date": "2026-07-15", "total_yi": 14.0, "verdict": "无动作", "confidence": "", "buy_count": 8, "sell_count": 6, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": 15.55, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": -1.3, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": -0.45, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": -22.67, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": -0.47, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": 23.32, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": 12.5, "pct": 5.95, "d_shares_wan": 40770.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": 0.97, "pct": 3.11, "d_shares_wan": 3240.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": 2.07, "pct": 15.63, "d_shares_wan": 14800.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": 0.01, "pct": 0.29, "d_shares_wan": 30.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": -4.18, "pct": -0.47, "d_shares_wan": -8640.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": 4.39, "pct": 0.97, "d_shares_wan": 9360.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": 0.82, "pct": 0.21, "d_shares_wan": 1620.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": -2.27, "pct": -0.8, "d_shares_wan": -4500.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": -0.06, "pct": -0.19, "d_shares_wan": -300.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": -3.42, "pct": -0.77, "d_shares_wan": -4200.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": 3.76, "pct": 4.29, "d_shares_wan": 11400.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": -0.74, "pct": -0.88, "d_shares_wan": -1600.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": -0.05, "pct": -7.53, "d_shares_wan": -200.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": -2.66, "pct": -1.1, "d_shares_wan": -8400.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": -6.74, "pct": -11.13, "d_shares_wan": -20800.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": -12.4, "pct": -10.57, "d_shares_wan": -38200.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": -1.04, "pct": -4.72, "d_shares_wan": -3200.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": 0.17, "pct": 0.46, "d_shares_wan": 500.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": -0.07, "pct": -0.2, "d_shares_wan": -500.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": -0.37, "pct": -3.94, "d_shares_wan": -2600.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": -0.03, "pct": -3.16, "d_shares_wan": -200.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": 13.82, "pct": 2.05, "d_shares_wan": 68100.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": 7.49, "pct": 1.84, "d_shares_wan": 38100.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": -0.08, "pct": -0.08, "d_shares_wan": -400.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 1.32, "pct": 1.88, "d_shares_wan": 10800.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": 0.77, "pct": 1.52, "d_shares_wan": 3900.0, "aum_yi": 52.0}]}, {"date": "2026-07-14", "total_yi": 94.82, "verdict": "买了", "confidence": "疑似", "buy_count": 18, "sell_count": 1, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": 6.89, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": 20.78, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": 23.4, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": 20.95, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": 3.03, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": 19.78, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": 5.63, "pct": 2.77, "d_shares_wan": 18450.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": 1.27, "pct": 4.23, "d_shares_wan": 4230.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": -0.01, "pct": -0.29, "d_shares_wan": -30.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": 7.8, "pct": 0.88, "d_shares_wan": 16110.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": 10.91, "pct": 2.46, "d_shares_wan": 23220.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": 1.95, "pct": 0.5, "d_shares_wan": 3870.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": 0.23, "pct": 0.08, "d_shares_wan": 450.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": -0.11, "pct": -0.38, "d_shares_wan": -600.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": 19.04, "pct": 4.3, "d_shares_wan": 22600.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": 1.58, "pct": 1.8, "d_shares_wan": 4700.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": 2.73, "pct": 3.32, "d_shares_wan": 5840.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.05, "pct": 8.14, "d_shares_wan": 200.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": 16.29, "pct": 7.13, "d_shares_wan": 50800.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 1.18, "pct": 1.96, "d_shares_wan": 3600.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": -1.91, "pct": -1.58, "d_shares_wan": -5800.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": 1.98, "pct": 9.72, "d_shares_wan": 6000.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": 3.41, "pct": 10.3, "d_shares_wan": 10100.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": 2.41, "pct": 7.12, "d_shares_wan": 16500.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": 0.43, "pct": 4.76, "d_shares_wan": 3000.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.07, "pct": 3.09, "d_shares_wan": 400.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.04, "pct": 6.16, "d_shares_wan": 300.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.08, "pct": 10.48, "d_shares_wan": 600.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": 10.49, "pct": 1.51, "d_shares_wan": 49500.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": 5.48, "pct": 1.31, "d_shares_wan": 26700.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": 1.11, "pct": 1.06, "d_shares_wan": 5400.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 2.14, "pct": 3.01, "d_shares_wan": 16800.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": 0.56, "pct": 1.07, "d_shares_wan": 2700.0, "aum_yi": 52.0}]}, {"date": "2026-07-13", "total_yi": 318.24, "verdict": "买了", "confidence": "大概率", "buy_count": 19, "sell_count": 0, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": 7.48, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": 84.96, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": 72.65, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": 126.42, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": 1.04, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": 25.69, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": 7.8, "pct": 4.04, "d_shares_wan": 25920.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": -0.32, "pct": -1.07, "d_shares_wan": -1080.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": 55.19, "pct": 6.78, "d_shares_wan": 116370.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": 11.56, "pct": 2.74, "d_shares_wan": 25110.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": 6.54, "pct": 1.75, "d_shares_wan": 13230.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": 11.35, "pct": 4.27, "d_shares_wan": 22950.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 0.32, "pct": 1.15, "d_shares_wan": 1800.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": 59.34, "pct": 15.78, "d_shares_wan": 71600.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": 8.34, "pct": 10.74, "d_shares_wan": 25300.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": 4.97, "pct": 6.55, "d_shares_wan": 10800.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": 58.68, "pct": 35.4, "d_shares_wan": 186200.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 6.85, "pct": 13.08, "d_shares_wan": 21200.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": 47.91, "pct": 67.72, "d_shares_wan": 148200.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": 3.89, "pct": 24.13, "d_shares_wan": 12000.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": 9.09, "pct": 38.8, "d_shares_wan": 27400.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": 0.18, "pct": 0.54, "d_shares_wan": 1250.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": 0.58, "pct": 7.14, "d_shares_wan": 4200.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.03, "pct": 1.57, "d_shares_wan": 200.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.25, "pct": 45.85, "d_shares_wan": 1800.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": 19.93, "pct": 2.99, "d_shares_wan": 94800.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": 1.1, "pct": 0.26, "d_shares_wan": 5400.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": 0.9, "pct": 0.87, "d_shares_wan": 4400.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 2.96, "pct": 4.37, "d_shares_wan": 23400.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": 0.8, "pct": 1.56, "d_shares_wan": 3900.0, "aum_yi": 52.0}]}, {"date": "2026-07-10", "total_yi": -52.38, "verdict": "卖了", "confidence": "疑似", "buy_count": 4, "sell_count": 11, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": -6.37, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": 0.27, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": -17.48, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": -53.3, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": 1.28, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": 23.22, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": -5.44, "pct": -2.71, "d_shares_wan": -17820.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": -0.78, "pct": -2.52, "d_shares_wan": -2610.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": -0.07, "pct": -0.53, "d_shares_wan": -500.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": -0.01, "pct": -0.29, "d_shares_wan": -30.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": -0.07, "pct": -2.71, "d_shares_wan": -500.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": -2.78, "pct": -0.33, "d_shares_wan": -5760.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": -0.04, "pct": -0.01, "d_shares_wan": -90.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": 1.4, "pct": 0.37, "d_shares_wan": 2790.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": 1.86, "pct": 0.69, "d_shares_wan": 3690.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": -0.17, "pct": -0.57, "d_shares_wan": -900.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": -12.47, "pct": -3.08, "d_shares_wan": -14400.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": -4.24, "pct": -4.96, "d_shares_wan": -12300.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": -0.77, "pct": -0.96, "d_shares_wan": -1600.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": -21.43, "pct": -10.94, "d_shares_wan": -64600.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": -6.12, "pct": -10.0, "d_shares_wan": -18000.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": -21.99, "pct": -22.79, "d_shares_wan": -64600.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": -1.84, "pct": -9.8, "d_shares_wan": -5400.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": -1.92, "pct": -7.23, "d_shares_wan": -5500.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": 1.28, "pct": 3.83, "d_shares_wan": 8500.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": 0.03, "pct": 0.34, "d_shares_wan": 200.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": -0.03, "pct": -4.85, "d_shares_wan": -200.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": 10.71, "pct": 1.57, "d_shares_wan": 49200.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": 5.44, "pct": 1.28, "d_shares_wan": 25800.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": 4.99, "pct": 4.92, "d_shares_wan": 23600.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 0.94, "pct": 1.36, "d_shares_wan": 7200.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": 1.14, "pct": 2.21, "d_shares_wan": 5400.0, "aum_yi": 52.0}]}, {"date": "2026-07-09", "total_yi": 32.81, "verdict": "无动作", "confidence": "", "buy_count": 8, "sell_count": 1, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": -0.43, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": 0.51, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": 10.39, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": 4.32, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": 1.48, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": 16.54, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": -0.28, "pct": -0.14, "d_shares_wan": -900.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": -0.19, "pct": -0.6, "d_shares_wan": -630.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": 0.01, "pct": 0.11, "d_shares_wan": 100.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": 0.03, "pct": 1.1, "d_shares_wan": 200.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": 0.58, "pct": 0.07, "d_shares_wan": 1170.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": 0.39, "pct": 0.09, "d_shares_wan": 810.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": 0.83, "pct": 0.22, "d_shares_wan": 1620.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": -1.29, "pct": -0.47, "d_shares_wan": -2520.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": 5.21, "pct": 1.28, "d_shares_wan": 5920.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": 3.85, "pct": 4.65, "d_shares_wan": 11000.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": 1.33, "pct": 1.66, "d_shares_wan": 2720.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": 3.9, "pct": 2.0, "d_shares_wan": 11600.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 1.38, "pct": 2.27, "d_shares_wan": 4000.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": 1.58, "pct": 1.65, "d_shares_wan": 4600.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": -0.14, "pct": -0.72, "d_shares_wan": -400.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": -2.4, "pct": -8.2, "d_shares_wan": -6800.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": 1.1, "pct": 3.37, "d_shares_wan": 7250.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": 0.38, "pct": 4.64, "d_shares_wan": 2600.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": 10.16, "pct": 1.43, "d_shares_wan": 44100.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": 1.88, "pct": 0.42, "d_shares_wan": 8400.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": -0.18, "pct": -0.17, "d_shares_wan": -800.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": -0.42, "pct": -0.56, "d_shares_wan": -3000.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": 5.1, "pct": 10.3, "d_shares_wan": 22800.0, "aum_yi": 52.0}]}, {"date": "2026-07-08", "total_yi": 92.54, "verdict": "买了", "confidence": "疑似", "buy_count": 9, "sell_count": 0, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": 1.3, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": 8.88, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": 14.31, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": 69.05, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": 1.31, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": -2.31, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": 1.54, "pct": 0.78, "d_shares_wan": 5130.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": -0.24, "pct": -0.77, "d_shares_wan": -810.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": 5.22, "pct": 0.64, "d_shares_wan": 10890.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": 1.88, "pct": 0.44, "d_shares_wan": 4050.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": 0.99, "pct": 0.26, "d_shares_wan": 1980.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": 0.63, "pct": 0.24, "d_shares_wan": 1260.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 0.16, "pct": 0.57, "d_shares_wan": 900.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": 13.36, "pct": 3.5, "d_shares_wan": 15640.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": -0.14, "pct": -0.17, "d_shares_wan": -400.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": 1.06, "pct": 1.39, "d_shares_wan": 2240.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.03, "pct": 4.24, "d_shares_wan": 100.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": 34.49, "pct": 22.16, "d_shares_wan": 105000.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 5.59, "pct": 10.41, "d_shares_wan": 16600.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": 19.28, "pct": 25.81, "d_shares_wan": 57200.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": 4.05, "pct": 27.57, "d_shares_wan": 12000.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": 5.64, "pct": 24.47, "d_shares_wan": 16300.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": 0.9, "pct": 2.87, "d_shares_wan": 6000.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": 0.41, "pct": 5.26, "d_shares_wan": 2800.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": -2.49, "pct": -0.38, "d_shares_wan": -11700.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": 0.62, "pct": 0.15, "d_shares_wan": 3000.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": -0.29, "pct": -0.29, "d_shares_wan": -1400.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": -0.15, "pct": -0.23, "d_shares_wan": -1200.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 52.0}]}, {"date": "2026-07-07", "total_yi": 82.67, "verdict": "买了", "confidence": "疑似", "buy_count": 12, "sell_count": 0, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": 3.94, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": 13.13, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": 9.7, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": 53.57, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": 0.57, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": 1.78, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": 4.2, "pct": 2.18, "d_shares_wan": 13950.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": -0.24, "pct": -0.76, "d_shares_wan": -810.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": -0.01, "pct": -0.29, "d_shares_wan": -30.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": -0.01, "pct": -0.54, "d_shares_wan": -100.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": 13.17, "pct": 1.62, "d_shares_wan": 27270.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": 0.38, "pct": 0.09, "d_shares_wan": 810.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": -0.32, "pct": -0.08, "d_shares_wan": -630.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": -0.27, "pct": -0.1, "d_shares_wan": -540.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 0.17, "pct": 0.58, "d_shares_wan": 900.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": 7.62, "pct": 2.01, "d_shares_wan": 8800.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": 1.24, "pct": 1.54, "d_shares_wan": 3600.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": 0.81, "pct": 1.05, "d_shares_wan": 1680.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.03, "pct": 4.43, "d_shares_wan": 100.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": 26.13, "pct": 19.64, "d_shares_wan": 77800.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 3.03, "pct": 5.84, "d_shares_wan": 8800.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": 21.5, "pct": 39.19, "d_shares_wan": 62400.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": 1.11, "pct": 7.94, "d_shares_wan": 3200.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": 1.8, "pct": 8.29, "d_shares_wan": 5100.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": 0.27, "pct": 0.84, "d_shares_wan": 1750.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": 0.3, "pct": 3.9, "d_shares_wan": 2000.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": -4.87, "pct": -0.74, "d_shares_wan": -23100.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": 1.35, "pct": 0.33, "d_shares_wan": 6600.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": 5.32, "pct": 5.7, "d_shares_wan": 26000.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": -0.08, "pct": -0.11, "d_shares_wan": -600.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": 0.06, "pct": 0.14, "d_shares_wan": 300.0, "aum_yi": 52.0}]}, {"date": "2026-07-06", "total_yi": 11.26, "verdict": "无动作", "confidence": "", "buy_count": 5, "sell_count": 5, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": -5.95, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": -19.44, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": 1.5, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": 27.53, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": -2.14, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": 9.77, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": -4.03, "pct": -2.02, "d_shares_wan": -13230.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": -1.89, "pct": -5.61, "d_shares_wan": -6300.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": -0.03, "pct": -0.58, "d_shares_wan": -60.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": -12.13, "pct": -1.46, "d_shares_wan": -24840.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": -2.56, "pct": -0.59, "d_shares_wan": -5400.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": -1.42, "pct": -0.37, "d_shares_wan": -2790.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": -3.39, "pct": -1.23, "d_shares_wan": -6660.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 0.06, "pct": 0.19, "d_shares_wan": 300.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": 5.21, "pct": 1.37, "d_shares_wan": 5920.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": -3.01, "pct": -3.55, "d_shares_wan": -8600.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": -0.7, "pct": -0.89, "d_shares_wan": -1440.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": 17.41, "pct": 14.71, "d_shares_wan": 50800.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": -1.61, "pct": -2.96, "d_shares_wan": -4600.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": 8.79, "pct": 18.62, "d_shares_wan": 25000.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": 0.63, "pct": 4.67, "d_shares_wan": 1800.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": 2.31, "pct": 11.61, "d_shares_wan": 6400.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": -2.2, "pct": -6.33, "d_shares_wan": -14000.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": 0.06, "pct": 0.79, "d_shares_wan": 400.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": -0.88, "pct": -0.13, "d_shares_wan": -4200.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": 3.06, "pct": 0.76, "d_shares_wan": 15000.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": 0.33, "pct": 0.35, "d_shares_wan": 1600.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 0.08, "pct": 0.11, "d_shares_wan": 600.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": 7.18, "pct": 18.87, "d_shares_wan": 35100.0, "aum_yi": 52.0}]}, {"date": "2026-07-03", "total_yi": -190.66, "verdict": "卖了", "confidence": "大概率", "buy_count": 6, "sell_count": 6, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": -4.47, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": -194.6, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": -3.13, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": 5.29, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": -0.53, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": 6.8, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": -4.19, "pct": -2.08, "d_shares_wan": -13860.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": -0.27, "pct": -0.8, "d_shares_wan": -900.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": -0.01, "pct": -0.29, "d_shares_wan": -30.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": -71.39, "pct": -7.89, "d_shares_wan": -146250.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": -77.97, "pct": -15.22, "d_shares_wan": -164700.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": -0.32, "pct": -0.08, "d_shares_wan": -630.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": -45.37, "pct": -14.1, "d_shares_wan": -89100.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 0.45, "pct": 1.57, "d_shares_wan": 2400.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": -2.74, "pct": -0.71, "d_shares_wan": -3080.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": -0.35, "pct": -0.41, "d_shares_wan": -1000.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": -0.04, "pct": -0.05, "d_shares_wan": -80.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": 2.02, "pct": 1.71, "d_shares_wan": 5800.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": -1.14, "pct": -2.02, "d_shares_wan": -3200.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": 3.43, "pct": 7.7, "d_shares_wan": 9600.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": 0.43, "pct": 3.22, "d_shares_wan": 1200.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": 0.55, "pct": 2.8, "d_shares_wan": 1500.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": -0.4, "pct": -1.12, "d_shares_wan": -2500.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": -0.16, "pct": -1.93, "d_shares_wan": -1000.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.03, "pct": 5.09, "d_shares_wan": 200.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": 1.25, "pct": 0.19, "d_shares_wan": 6000.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": 5.88, "pct": 1.49, "d_shares_wan": 29100.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": -0.44, "pct": -0.48, "d_shares_wan": -2200.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 0.23, "pct": 0.34, "d_shares_wan": 1800.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": -0.12, "pct": -0.32, "d_shares_wan": -600.0, "aum_yi": 52.0}]}, {"date": "2026-07-02", "total_yi": 70.72, "verdict": "买了", "confidence": "疑似", "buy_count": 15, "sell_count": 3, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": 9.54, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": -26.51, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": 31.27, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": 14.37, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": 0.67, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": 41.39, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": 8.62, "pct": 4.49, "d_shares_wan": 28710.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": 0.93, "pct": 2.86, "d_shares_wan": 3150.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": -0.01, "pct": -0.1, "d_shares_wan": -100.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": 6.63, "pct": 0.74, "d_shares_wan": 13680.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": -24.13, "pct": -4.53, "d_shares_wan": -51300.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": 2.59, "pct": 0.68, "d_shares_wan": 5130.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": -11.93, "pct": -3.6, "d_shares_wan": -23580.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 0.33, "pct": 1.19, "d_shares_wan": 1800.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": 21.19, "pct": 5.83, "d_shares_wan": 23960.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": 7.57, "pct": 9.7, "d_shares_wan": 21500.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": 2.51, "pct": 3.28, "d_shares_wan": 5120.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": 13.4, "pct": 12.75, "d_shares_wan": 38400.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": -9.72, "pct": -14.65, "d_shares_wan": -27200.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": 7.8, "pct": 21.2, "d_shares_wan": 21800.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": 0.72, "pct": 5.66, "d_shares_wan": 2000.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": 2.17, "pct": 12.36, "d_shares_wan": 5900.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": 0.48, "pct": 1.36, "d_shares_wan": 3000.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": 0.16, "pct": 1.97, "d_shares_wan": 1000.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.03, "pct": 5.37, "d_shares_wan": 200.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": 24.44, "pct": 3.89, "d_shares_wan": 116700.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": 13.04, "pct": 3.4, "d_shares_wan": 64200.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": 1.46, "pct": 1.6, "d_shares_wan": 7200.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 2.27, "pct": 3.51, "d_shares_wan": 18000.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": 0.18, "pct": 0.48, "d_shares_wan": 900.0, "aum_yi": 52.0}]}, {"date": "2026-07-01", "total_yi": -87.88, "verdict": "卖了", "confidence": "疑似", "buy_count": 3, "sell_count": 9, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": 0.29, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": -58.09, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": -4.38, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": -35.15, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": 1.41, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": 8.05, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": -0.11, "pct": -0.06, "d_shares_wan": -360.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": 0.38, "pct": 1.16, "d_shares_wan": 1260.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": -0.03, "pct": -0.21, "d_shares_wan": -200.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": 0.05, "pct": 1.16, "d_shares_wan": 120.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": -25.94, "pct": -2.75, "d_shares_wan": -51930.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": -12.87, "pct": -2.29, "d_shares_wan": -26550.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": 0.75, "pct": 0.19, "d_shares_wan": 1440.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": -20.03, "pct": -5.54, "d_shares_wan": -38430.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": -3.63, "pct": -0.95, "d_shares_wan": -3960.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": -0.91, "pct": -1.12, "d_shares_wan": -2500.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": 0.16, "pct": 0.21, "d_shares_wan": 320.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": -2.37, "pct": -2.14, "d_shares_wan": -6600.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": -20.73, "pct": -23.3, "d_shares_wan": -56400.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": -10.96, "pct": -22.47, "d_shares_wan": -29800.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": -0.15, "pct": -1.12, "d_shares_wan": -400.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": -0.94, "pct": -4.98, "d_shares_wan": -2500.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": 1.47, "pct": 4.25, "d_shares_wan": 9000.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": -0.03, "pct": -0.39, "d_shares_wan": -200.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": -0.03, "pct": -5.09, "d_shares_wan": -200.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": 3.0, "pct": 0.44, "d_shares_wan": 13200.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": 2.38, "pct": 0.58, "d_shares_wan": 10800.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": 3.57, "pct": 3.74, "d_shares_wan": 16200.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 1.15, "pct": 1.67, "d_shares_wan": 8400.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": -2.05, "pct": -4.77, "d_shares_wan": -9300.0, "aum_yi": 52.0}]}, {"date": "2026-06-30", "total_yi": -191.61, "verdict": "卖了", "confidence": "大概率", "buy_count": 2, "sell_count": 11, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": 2.82, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": -173.62, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": 0.67, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": -12.64, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": 1.22, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": -10.04, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": 2.83, "pct": 1.46, "d_shares_wan": 9180.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": 0.05, "pct": 0.17, "d_shares_wan": 180.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": -0.04, "pct": -0.31, "d_shares_wan": -300.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": -0.01, "pct": -0.29, "d_shares_wan": -30.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": -0.01, "pct": -0.54, "d_shares_wan": -100.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": -51.24, "pct": -5.12, "d_shares_wan": -102150.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": -78.35, "pct": -12.19, "d_shares_wan": -161010.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": -41.08, "pct": -9.49, "d_shares_wan": -78570.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": -3.01, "pct": -0.82, "d_shares_wan": -5760.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 0.06, "pct": 0.2, "d_shares_wan": 300.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": 0.84, "pct": 0.22, "d_shares_wan": 920.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": 0.4, "pct": 0.49, "d_shares_wan": 1100.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": -0.57, "pct": -0.71, "d_shares_wan": -1120.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": -10.4, "pct": -8.67, "d_shares_wan": -29200.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 4.3, "pct": 5.12, "d_shares_wan": 11800.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": -4.53, "pct": -8.55, "d_shares_wan": -12400.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": -0.44, "pct": -3.25, "d_shares_wan": -1200.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": -1.57, "pct": -7.72, "d_shares_wan": -4200.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": 1.65, "pct": 5.09, "d_shares_wan": 10250.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": -0.4, "pct": -4.85, "d_shares_wan": -2600.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": -0.03, "pct": -4.85, "d_shares_wan": -200.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": 0.63, "pct": 0.09, "d_shares_wan": 2700.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": 2.03, "pct": 0.48, "d_shares_wan": 9000.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": -7.9, "pct": -7.48, "d_shares_wan": -35000.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 0.42, "pct": 0.6, "d_shares_wan": 3000.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": -5.22, "pct": -10.59, "d_shares_wan": -23100.0, "aum_yi": 52.0}]}, {"date": "2026-06-29", "total_yi": -118.83, "verdict": "卖了", "confidence": "大概率", "buy_count": 7, "sell_count": 6, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": -2.89, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": -131.79, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": -4.16, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": 46.1, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": -0.39, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": -25.71, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": -2.69, "pct": -1.37, "d_shares_wan": -8730.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": -0.19, "pct": -0.58, "d_shares_wan": -630.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": -0.01, "pct": -0.54, "d_shares_wan": -100.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": -42.87, "pct": -4.15, "d_shares_wan": -86400.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": -32.54, "pct": -4.87, "d_shares_wan": -67590.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": -24.81, "pct": -5.48, "d_shares_wan": -47970.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": -31.68, "pct": -8.04, "d_shares_wan": -61200.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 0.11, "pct": 0.4, "d_shares_wan": 600.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": -3.33, "pct": -0.89, "d_shares_wan": -3720.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": -0.75, "pct": -0.93, "d_shares_wan": -2100.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": -0.08, "pct": -0.1, "d_shares_wan": -160.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": 11.54, "pct": 10.93, "d_shares_wan": 33200.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 26.06, "pct": 46.61, "d_shares_wan": 73200.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": 7.2, "pct": 16.18, "d_shares_wan": 20200.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": 0.5, "pct": 3.94, "d_shares_wan": 1400.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": 0.8, "pct": 4.21, "d_shares_wan": 2200.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": -0.63, "pct": -1.95, "d_shares_wan": -4000.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": 0.21, "pct": 2.68, "d_shares_wan": 1400.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.03, "pct": 5.09, "d_shares_wan": 200.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": -24.13, "pct": -3.49, "d_shares_wan": -107700.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": -0.2, "pct": -0.05, "d_shares_wan": -900.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": -0.48, "pct": -0.47, "d_shares_wan": -2200.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": -0.57, "pct": -0.83, "d_shares_wan": -4200.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": -0.33, "pct": -0.68, "d_shares_wan": -1500.0, "aum_yi": 52.0}]}, {"date": "2026-06-26", "total_yi": 2.83, "verdict": "无动作", "confidence": "", "buy_count": 7, "sell_count": 4, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": -2.32, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": 0.95, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": -13.29, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": 16.85, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": -0.72, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": 1.36, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": -2.4, "pct": -1.24, "d_shares_wan": -8010.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": 0.13, "pct": 0.41, "d_shares_wan": 450.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": -0.04, "pct": -0.31, "d_shares_wan": -300.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": -0.01, "pct": -0.54, "d_shares_wan": -100.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": 2.73, "pct": 0.27, "d_shares_wan": 5580.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": 0.86, "pct": 0.13, "d_shares_wan": 1800.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": -0.41, "pct": -0.09, "d_shares_wan": -810.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": -2.12, "pct": -0.54, "d_shares_wan": -4140.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": -0.11, "pct": -0.4, "d_shares_wan": -600.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": -7.96, "pct": -2.11, "d_shares_wan": -9000.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": -5.17, "pct": -6.13, "d_shares_wan": -14700.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": -0.16, "pct": -0.2, "d_shares_wan": -320.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": 2.43, "pct": 2.36, "d_shares_wan": 7000.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 9.83, "pct": 21.32, "d_shares_wan": 27600.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": 3.57, "pct": 8.71, "d_shares_wan": 10000.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": 0.29, "pct": 2.3, "d_shares_wan": 800.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": 0.73, "pct": 3.98, "d_shares_wan": 2000.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": -0.75, "pct": -2.26, "d_shares_wan": -4750.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": 0.06, "pct": 0.77, "d_shares_wan": 400.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": -0.03, "pct": -4.85, "d_shares_wan": -200.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": -3.41, "pct": -0.51, "d_shares_wan": -15900.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": -2.74, "pct": -0.7, "d_shares_wan": -13200.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": 2.37, "pct": 2.48, "d_shares_wan": 11400.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 0.77, "pct": 1.2, "d_shares_wan": 6000.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": 4.37, "pct": 10.57, "d_shares_wan": 21000.0, "aum_yi": 52.0}]}, {"date": "2026-06-25", "total_yi": -356.18, "verdict": "卖了", "confidence": "大概率", "buy_count": 4, "sell_count": 13, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": -10.9, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": -342.92, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": 1.87, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": -9.07, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": -1.16, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": 5.99, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": -9.96, "pct": -4.8, "d_shares_wan": -32580.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": -1.0, "pct": -2.97, "d_shares_wan": -3330.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": 0.06, "pct": 0.42, "d_shares_wan": 400.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": -108.11, "pct": -9.36, "d_shares_wan": -214200.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": -91.67, "pct": -11.9, "d_shares_wan": -187290.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": -93.21, "pct": -16.82, "d_shares_wan": -177210.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": -49.93, "pct": -11.03, "d_shares_wan": -94860.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": -4.98, "pct": -1.27, "d_shares_wan": -5480.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": 7.62, "pct": 9.64, "d_shares_wan": 21100.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": -0.77, "pct": -0.96, "d_shares_wan": -1520.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": -2.43, "pct": -2.24, "d_shares_wan": -6800.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 3.07, "pct": 6.94, "d_shares_wan": 8400.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": -8.7, "pct": -17.17, "d_shares_wan": -23800.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": -0.22, "pct": -1.7, "d_shares_wan": -600.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": -0.79, "pct": -4.01, "d_shares_wan": -2100.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": -0.97, "pct": -2.78, "d_shares_wan": -6000.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": -0.16, "pct": -1.89, "d_shares_wan": -1000.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": -0.03, "pct": -4.62, "d_shares_wan": -200.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": -3.53, "pct": -0.52, "d_shares_wan": -16200.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": -0.7, "pct": -0.18, "d_shares_wan": -3300.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": 4.99, "pct": 5.42, "d_shares_wan": 23600.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 0.47, "pct": 0.73, "d_shares_wan": 3600.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": 4.76, "pct": 12.78, "d_shares_wan": 22500.0, "aum_yi": 52.0}]}, {"date": "2026-06-24", "total_yi": -296.11, "verdict": "卖了", "confidence": "大概率", "buy_count": 3, "sell_count": 12, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": -18.1, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": -258.63, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": 1.93, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": -6.19, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": -1.53, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": -13.6, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": -16.63, "pct": -7.49, "d_shares_wan": -54990.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": -1.23, "pct": -3.56, "d_shares_wan": -4140.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": -0.03, "pct": -0.21, "d_shares_wan": -200.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": -0.17, "pct": -3.63, "d_shares_wan": -390.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": -0.04, "pct": -1.58, "d_shares_wan": -300.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": -88.98, "pct": -7.25, "d_shares_wan": -179010.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": -61.68, "pct": -7.52, "d_shares_wan": -127980.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": -61.76, "pct": -10.17, "d_shares_wan": -119250.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": -46.32, "pct": -9.41, "d_shares_wan": -89370.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 0.11, "pct": 0.4, "d_shares_wan": 600.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": -0.4, "pct": -0.1, "d_shares_wan": -440.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": 2.25, "pct": 2.97, "d_shares_wan": 6300.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": 0.08, "pct": 0.1, "d_shares_wan": 160.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": -6.18, "pct": -5.42, "d_shares_wan": -17400.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 2.26, "pct": 5.4, "d_shares_wan": 6200.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": -1.53, "pct": -2.94, "d_shares_wan": -4200.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": -0.07, "pct": -0.56, "d_shares_wan": -200.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": -0.67, "pct": -3.33, "d_shares_wan": -1800.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": -1.46, "pct": -4.0, "d_shares_wan": -9000.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": -0.13, "pct": -1.49, "d_shares_wan": -800.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.06, "pct": 10.19, "d_shares_wan": 400.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": -9.63, "pct": -1.45, "d_shares_wan": -45900.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": -4.09, "pct": -1.06, "d_shares_wan": -20100.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": 0.28, "pct": 0.32, "d_shares_wan": 1400.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": -0.53, "pct": -0.84, "d_shares_wan": -4200.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": 0.37, "pct": 1.03, "d_shares_wan": 1800.0, "aum_yi": 52.0}]}, {"date": "2026-06-23", "total_yi": -259.19, "verdict": "卖了", "confidence": "大概率", "buy_count": 3, "sell_count": 9, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": -2.94, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": -247.44, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": -12.87, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": 7.29, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": -1.25, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": -2.0, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": -2.22, "pct": -0.99, "d_shares_wan": -7380.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": -0.61, "pct": -1.75, "d_shares_wan": -2070.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": -0.11, "pct": -0.83, "d_shares_wan": -800.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": -84.5, "pct": -6.47, "d_shares_wan": -170820.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": -65.18, "pct": -7.39, "d_shares_wan": -135900.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": -52.88, "pct": -8.04, "d_shares_wan": -102600.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": -44.99, "pct": -8.41, "d_shares_wan": -87210.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 0.11, "pct": 0.4, "d_shares_wan": 600.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": -12.18, "pct": -3.09, "d_shares_wan": -13800.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": -0.42, "pct": -0.56, "d_shares_wan": -1200.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": -0.24, "pct": -0.3, "d_shares_wan": -480.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": -0.03, "pct": -4.24, "d_shares_wan": -100.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": 1.05, "pct": 0.94, "d_shares_wan": 3000.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 0.29, "pct": 0.7, "d_shares_wan": 800.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": 4.75, "pct": 10.18, "d_shares_wan": 13200.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": 0.43, "pct": 3.5, "d_shares_wan": 1200.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": 0.77, "pct": 4.04, "d_shares_wan": 2100.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": -0.93, "pct": -2.49, "d_shares_wan": -5750.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": -0.32, "pct": -3.59, "d_shares_wan": -2000.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": 1.15, "pct": 0.18, "d_shares_wan": 5700.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": -2.23, "pct": -0.59, "d_shares_wan": -11400.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": -1.02, "pct": -1.18, "d_shares_wan": -5200.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 0.22, "pct": 0.36, "d_shares_wan": 1800.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": -0.12, "pct": -0.34, "d_shares_wan": -600.0, "aum_yi": 52.0}]}, {"date": "2026-06-22", "total_yi": -73.67, "verdict": "卖了", "confidence": "疑似", "buy_count": 1, "sell_count": 11, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": -9.46, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": -55.56, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": -13.92, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": -0.27, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": -0.46, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": 5.99, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": -8.72, "pct": -3.66, "d_shares_wan": -28170.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": -0.6, "pct": -1.65, "d_shares_wan": -1980.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": -0.07, "pct": -0.51, "d_shares_wan": -500.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": -0.03, "pct": -0.56, "d_shares_wan": -60.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": -0.04, "pct": -1.56, "d_shares_wan": -300.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": -7.23, "pct": -0.54, "d_shares_wan": -14220.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": -30.59, "pct": -3.26, "d_shares_wan": -62010.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": -7.2, "pct": -1.05, "d_shares_wan": -13590.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": -10.6, "pct": -1.89, "d_shares_wan": -19980.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 0.06, "pct": 0.2, "d_shares_wan": 300.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": -10.67, "pct": -2.58, "d_shares_wan": -11840.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": -2.33, "pct": -2.95, "d_shares_wan": -6500.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": -0.92, "pct": -1.14, "d_shares_wan": -1840.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": -1.93, "pct": -1.67, "d_shares_wan": -5400.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 2.49, "pct": 6.34, "d_shares_wan": 6800.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": 0.37, "pct": 0.78, "d_shares_wan": 1000.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": -0.37, "pct": -2.83, "d_shares_wan": -1000.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": -0.83, "pct": -4.06, "d_shares_wan": -2200.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": -0.33, "pct": -0.86, "d_shares_wan": -2000.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": -0.1, "pct": -1.07, "d_shares_wan": -600.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": -0.03, "pct": -4.85, "d_shares_wan": -200.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": 7.58, "pct": 1.18, "d_shares_wan": 36900.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": -2.81, "pct": -0.73, "d_shares_wan": -14100.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": 1.24, "pct": 1.43, "d_shares_wan": 6200.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 0.22, "pct": 0.36, "d_shares_wan": 1800.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": -0.24, "pct": -0.68, "d_shares_wan": -1200.0, "aum_yi": 52.0}]}, {"date": "2026-06-18", "total_yi": -118.26, "verdict": "卖了", "confidence": "大概率", "buy_count": 4, "sell_count": 11, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": -1.17, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": -91.57, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": 1.15, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": 2.95, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": -0.53, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": -29.08, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": -1.82, "pct": -0.78, "d_shares_wan": -6030.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": 0.64, "pct": 1.83, "d_shares_wan": 2160.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": 0.01, "pct": 0.28, "d_shares_wan": 30.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": -27.6, "pct": -2.05, "d_shares_wan": -55530.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": -24.58, "pct": -2.62, "d_shares_wan": -51030.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": -14.58, "pct": -2.14, "d_shares_wan": -28170.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": -24.81, "pct": -4.34, "d_shares_wan": -47880.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": 0.32, "pct": 0.08, "d_shares_wan": 360.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": 1.3, "pct": 1.71, "d_shares_wan": 3700.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": -0.47, "pct": -0.59, "d_shares_wan": -960.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": -0.35, "pct": -0.31, "d_shares_wan": -1000.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 2.98, "pct": 8.28, "d_shares_wan": 8200.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": 0.87, "pct": 1.9, "d_shares_wan": 2400.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": -0.07, "pct": -0.56, "d_shares_wan": -200.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": -0.48, "pct": -2.34, "d_shares_wan": -1300.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": -0.12, "pct": -0.32, "d_shares_wan": -750.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": -0.41, "pct": -4.42, "d_shares_wan": -2600.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": -16.87, "pct": -2.61, "d_shares_wan": -83700.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": -7.9, "pct": -2.05, "d_shares_wan": -40500.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": -1.29, "pct": -1.5, "d_shares_wan": -6600.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": -1.02, "pct": -1.66, "d_shares_wan": -8400.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": -2.0, "pct": -5.47, "d_shares_wan": -10200.0, "aum_yi": 52.0}]}, {"date": "2026-06-17", "total_yi": -172.47, "verdict": "卖了", "confidence": "大概率", "buy_count": 3, "sell_count": 9, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": -18.05, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": -138.33, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": -1.73, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": 9.46, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": -0.73, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": -23.08, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": -17.2, "pct": -6.85, "d_shares_wan": -57060.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": -0.85, "pct": -2.38, "d_shares_wan": -2880.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": -44.04, "pct": -3.18, "d_shares_wan": -88830.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": -50.69, "pct": -5.13, "d_shares_wan": -105480.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": -14.46, "pct": -2.08, "d_shares_wan": -27990.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": -29.08, "pct": -4.85, "d_shares_wan": -56250.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": -0.06, "pct": -0.2, "d_shares_wan": -300.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": -0.74, "pct": -0.18, "d_shares_wan": -840.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": -1.81, "pct": -2.35, "d_shares_wan": -5200.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": 0.82, "pct": 1.05, "d_shares_wan": 1680.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": 1.83, "pct": 1.63, "d_shares_wan": 5200.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 3.31, "pct": 10.24, "d_shares_wan": 9200.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": 4.18, "pct": 10.12, "d_shares_wan": 11600.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": 0.07, "pct": 0.57, "d_shares_wan": 200.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": 0.07, "pct": 0.36, "d_shares_wan": 200.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": -0.64, "pct": -1.68, "d_shares_wan": -4000.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": -0.09, "pct": -1.01, "d_shares_wan": -600.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": -19.85, "pct": -3.09, "d_shares_wan": -102300.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": -1.01, "pct": -0.27, "d_shares_wan": -5400.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": -0.94, "pct": -1.12, "d_shares_wan": -5000.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": -0.77, "pct": -1.29, "d_shares_wan": -6600.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": -0.51, "pct": -1.43, "d_shares_wan": -2700.0, "aum_yi": 52.0}]}, {"date": "2026-06-16", "total_yi": -122.15, "verdict": "卖了", "confidence": "大概率", "buy_count": 4, "sell_count": 9, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": 1.65, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": -100.73, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": -12.97, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": -18.47, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": 1.24, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": 7.13, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": 1.24, "pct": 0.5, "d_shares_wan": 4140.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": 0.4, "pct": 1.13, "d_shares_wan": 1350.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": 0.01, "pct": 0.28, "d_shares_wan": 30.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": -20.25, "pct": -1.45, "d_shares_wan": -41220.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": -43.31, "pct": -4.24, "d_shares_wan": -90990.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": -16.71, "pct": -2.37, "d_shares_wan": -32670.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": -20.46, "pct": -3.33, "d_shares_wan": -39960.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": -9.64, "pct": -2.38, "d_shares_wan": -11160.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": -1.99, "pct": -2.55, "d_shares_wan": -5800.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": -1.34, "pct": -1.71, "d_shares_wan": -2800.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": -13.47, "pct": -10.79, "d_shares_wan": -38600.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": 1.36, "pct": 4.42, "d_shares_wan": 3800.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": -6.73, "pct": -14.09, "d_shares_wan": -18800.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": -0.14, "pct": -1.12, "d_shares_wan": -400.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": 0.51, "pct": 2.6, "d_shares_wan": 1400.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": 1.4, "pct": 3.82, "d_shares_wan": 8750.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": -0.16, "pct": -1.65, "d_shares_wan": -1000.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": 4.06, "pct": 0.67, "d_shares_wan": 21900.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": 1.45, "pct": 0.41, "d_shares_wan": 8100.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": 0.07, "pct": 0.09, "d_shares_wan": 400.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": 0.47, "pct": 0.83, "d_shares_wan": 4200.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": 1.08, "pct": 3.28, "d_shares_wan": 6000.0, "aum_yi": 52.0}]}, {"date": "2026-06-15", "total_yi": -75.63, "verdict": "卖了", "confidence": "疑似", "buy_count": 6, "sell_count": 7, "etf_count": 29, "cats": [{"cat": "上证50", "flow_yi": 4.95, "n_have": 5, "n_total": 5}, {"cat": "沪深300", "flow_yi": -92.72, "n_have": 5, "n_total": 5}, {"cat": "中证500", "flow_yi": 24.35, "n_have": 4, "n_total": 4}, {"cat": "中证1000", "flow_yi": -3.32, "n_have": 5, "n_total": 5}, {"cat": "中证2000", "flow_yi": 1.89, "n_have": 5, "n_total": 5}, {"cat": "科创50", "flow_yi": -10.78, "n_have": 5, "n_total": 5}], "etfs": [{"code": "510050", "name": "华夏上证50ETF", "index": "上证50", "flow_yi": 3.75, "pct": 1.52, "d_shares_wan": 12420.0, "aum_yi": 233.0}, {"code": "510100", "name": "易方达上证50ETF", "index": "上证50", "flow_yi": 1.2, "pct": 3.5, "d_shares_wan": 4050.0, "aum_yi": 39.0}, {"code": "530000", "name": "天弘上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 16.0}, {"code": "510710", "name": "博时上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 5.0}, {"code": "510800", "name": "建信上证50ETF", "index": "上证50", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "510300", "name": "华泰柏瑞沪深300ETF", "index": "沪深300", "flow_yi": -11.87, "pct": -0.84, "d_shares_wan": -24120.0, "aum_yi": 1173.0}, {"code": "510310", "name": "易方达沪深300ETF", "index": "沪深300", "flow_yi": -34.84, "pct": -3.29, "d_shares_wan": -73080.0, "aum_yi": 525.0}, {"code": "510330", "name": "华夏沪深300ETF", "index": "沪深300", "flow_yi": -24.99, "pct": -3.42, "d_shares_wan": -48780.0, "aum_yi": 426.0}, {"code": "159919", "name": "嘉实沪深300ETF", "index": "沪深300", "flow_yi": -20.91, "pct": -3.28, "d_shares_wan": -40770.0, "aum_yi": 312.0}, {"code": "510360", "name": "广发沪深300ETF", "index": "沪深300", "flow_yi": -0.11, "pct": -0.4, "d_shares_wan": -600.0, "aum_yi": 34.0}, {"code": "510500", "name": "南方中证500ETF", "index": "中证500", "flow_yi": 20.92, "pct": 5.51, "d_shares_wan": 24520.0, "aum_yi": 474.0}, {"code": "159922", "name": "嘉实中证500ETF", "index": "中证500", "flow_yi": 2.48, "pct": 3.32, "d_shares_wan": 7300.0, "aum_yi": 93.0}, {"code": "512500", "name": "华夏中证500ETF", "index": "中证500", "flow_yi": 0.95, "pct": 1.24, "d_shares_wan": 2000.0, "aum_yi": 84.0}, {"code": "159935", "name": "景顺长城中证500ETF", "index": "中证500", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "512100", "name": "南方中证1000ETF", "index": "中证1000", "flow_yi": 2.41, "pct": 2.0, "d_shares_wan": 7000.0, "aum_yi": 276.0}, {"code": "560010", "name": "广发中证1000ETF", "index": "中证1000", "flow_yi": -1.27, "pct": -4.02, "d_shares_wan": -3600.0, "aum_yi": 69.0}, {"code": "159845", "name": "华夏中证1000ETF", "index": "中证1000", "flow_yi": -0.99, "pct": -2.06, "d_shares_wan": -2800.0, "aum_yi": 105.0}, {"code": "159629", "name": "富国中证1000ETF", "index": "中证1000", "flow_yi": -1.34, "pct": -9.61, "d_shares_wan": -3800.0, "aum_yi": 22.0}, {"code": "159633", "name": "易方达中证1000ETF", "index": "中证1000", "flow_yi": -2.13, "pct": -9.86, "d_shares_wan": -5900.0, "aum_yi": 42.0}, {"code": "563300", "name": "华泰柏瑞中证2000ETF", "index": "中证2000", "flow_yi": 2.01, "pct": 5.9, "d_shares_wan": 12750.0, "aum_yi": 57.0}, {"code": "159531", "name": "南方中证2000ETF", "index": "中证2000", "flow_yi": -0.12, "pct": -1.31, "d_shares_wan": -800.0, "aum_yi": 13.0}, {"code": "159532", "name": "易方达中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 3.0}, {"code": "560220", "name": "广发中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "159536", "name": "汇添富中证2000ETF", "index": "中证2000", "flow_yi": 0.0, "pct": 0.0, "d_shares_wan": 0.0, "aum_yi": 1.0}, {"code": "588000", "name": "华夏上证科创板50成份ETF", "index": "科创50", "flow_yi": -6.48, "pct": -1.06, "d_shares_wan": -35100.0, "aum_yi": 879.0}, {"code": "588080", "name": "易方达上证科创板50ETF", "index": "科创50", "flow_yi": -3.43, "pct": -0.97, "d_shares_wan": -19200.0, "aum_yi": 423.0}, {"code": "588050", "name": "科创50ETF工银", "index": "科创50", "flow_yi": -0.04, "pct": -0.04, "d_shares_wan": -200.0, "aum_yi": 109.0}, {"code": "588060", "name": "广发科创50ETF", "index": "科创50", "flow_yi": -0.4, "pct": -0.7, "d_shares_wan": -3600.0, "aum_yi": 78.0}, {"code": "588090", "name": "华泰柏瑞上证科创板50成份ETF", "index": "科创50", "flow_yi": -0.43, "pct": -1.29, "d_shares_wan": -2400.0, "aum_yi": 52.0}]}]};
+
+const fmt = (n,d=1)=> n==null?'—':(n>0?'+':'')+n.toFixed(d);
+const cls = v => v>0?'buy':(v<0?'sell':'flat');
+const arrow = v => v>0?'▲':(v<0?'▼':'');
+
+/* ---------- 今日裁决 ---------- */
+(function(){
+  const r = DATA.records[0];
+  document.getElementById('mh-date').textContent = '数据截至 '+DATA.asof+' 收盘 · 生成于 '+DATA.generated;
+  const vTxt = r.verdict==='买了'?'买了！':(r.verdict==='卖了'?'卖了。':'没动手。');
+  const vCls = r.verdict==='买了'?'buy':(r.verdict==='卖了'?'sell':'flat');
+  const confTxt = r.confidence ? (r.confidence==='大概率'?'大概率':'疑似信号') : '信号不足';
+  const missing = r.etfs.filter(e=>e.flow_yi===null).map(e=>e.code);
+  document.getElementById('hero').innerHTML = `
+    <div class="q">${r.date} · 最近交易日裁决</div>
+    <div class="verdict-big ${vCls}">${r.verdict==='无动作'?'国家队今天'+vTxt:'国家队今天'+vTxt}</div>
+    <div><span class="verdict-conf ${vCls}">${confTxt}</span></div>
+    <div class="verdict-stats">
+      <div class="vstat"><div class="num ${cls(r.total_yi)}">${fmt(r.total_yi)}</div><div class="lbl">29只ETF汇总净申赎（亿元，估算）</div></div>
+      <div class="vstat"><div class="num ${r.buy_count>0?'buy':''}">${r.buy_count} / ${r.etf_count}</div><div class="lbl">放量申购（份额日增≥1.5%）</div></div>
+      <div class="vstat"><div class="num ${r.sell_count>0?'sell':''}">${r.sell_count} / ${r.etf_count}</div><div class="lbl">放量赎回（份额日减≥1.5%）</div></div>
+    </div>
+    <div class="cats">${r.cats.map(c=>`
+      <div class="cat">
+        <div class="nm">${c.cat}</div>
+        <div class="val ${c.flow_yi===null?'na':cls(c.flow_yi)}">${c.flow_yi===null?'—':(arrow(c.flow_yi)+' '+fmt(c.flow_yi))}</div>
+        <div class="cnt">${c.n_have}/${c.n_total}只 · 亿元</div>
+      </div>`).join('')}
+    </div>
+    <div class="verdict-note">
+      ${r.verdict==='无动作'
+        ? `汇总净申赎 <b>${fmt(r.total_yi)}亿</b>，绝对值不足50亿，属于日常波动范围。`
+        : `汇总净申赎 <b>${fmt(r.total_yi)}亿</b>，按绝对值法判定为「${r.confidence}·${r.verdict==='买了'?'净买入':'净卖出'}」信号。`}
+      ${missing.length?`<br>注意：当日 ${missing.join('、')} 份额数据尚未更新，汇总基于其余${r.etf_count}只。`:''}
+    </div>`;
+})();
+
+/* ---------- 双屏翻页 ---------- */
+(function(){
+  const body=document.body;
+  const data=document.getElementById('screen-data');
+  const show=d=>{
+    body.classList.toggle('show-data',d);
+    body.classList.toggle('lock',!d);
+    if(d){ data.scrollTop=0; }
+  };
+  document.getElementById('go-data').addEventListener('click',()=>show(true));
+  document.getElementById('go-home').addEventListener('click',()=>show(false));
+  document.getElementById('foot-home').addEventListener('click',e=>{e.preventDefault();show(false);});
+  let lockT=0;
+  const tryFlip=dy=>{
+    const now=Date.now();
+    if(now-lockT<750) return;
+    if(!body.classList.contains('show-data') && dy>40){ show(true); lockT=now; }
+    else if(body.classList.contains('show-data') && data.scrollTop<=0 && dy<-40){ show(false); lockT=now; }
+  };
+  window.addEventListener('wheel',e=>tryFlip(e.deltaY),{passive:true});
+  let ty=null;
+  window.addEventListener('touchstart',e=>{ty=e.touches[0].clientY;},{passive:true});
+  window.addEventListener('touchend',e=>{
+    if(ty===null) return;
+    const dy=ty-e.changedTouches[0].clientY; ty=null;
+    tryFlip(dy>0?dy+20:dy-20); // 触摸略降门槛
+  },{passive:true});
+})();
+
+/* ---------- 规则条 ---------- */
+document.getElementById('rule').innerHTML = `
+  <div class="left"><b>判定规则</b></div>
+  <div class="center">汇总净申赎 T = Σ(份额变动×估算净值) ｜ 绝对值法：|T| ≥ 100亿 = <b>大概率</b> ｜ 50–100亿 = <b>疑似</b> ｜ &lt;50亿 = <b>未见明显动作</b></div>
+  <div class="right">单位：亿元</div>`;
+
+/* ---------- 柱状图 ---------- */
+(function(){
+  const svg = document.getElementById('chart');
+  const recs = [...DATA.records].reverse();
+  const W=1200,H=340,P={l:64,r:44,t:26,b:40};
+  const maxV = Math.max(...recs.map(r=>Math.abs(r.total_yi)),105)*1.08;
+  const x = i => P.l + (W-P.l-P.r)*(i+0.5)/recs.length;
+  const bw = (W-P.l-P.r)/recs.length*0.62;
+  const y = v => P.t + (H-P.t-P.b)*(1-(v+maxV)/(2*maxV));
+  const y0 = y(0);
+  let s='';
+  // 网格与刻度
+  const steps=[-maxV,-maxV/2,0,maxV/2,maxV];
+  steps.forEach(v=>{
+    s+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="#101010${v===0?'':'22'}" stroke-width="1"/>`;
+    s+=`<text x="${P.l-10}" y="${y(v)+5}" text-anchor="end" font-size="15">${v.toFixed(0)}</text>`;
+  });
+  recs.forEach((r,i)=>{
+    const h=Math.abs(y(r.total_yi)-y0);
+    const top=r.total_yi>=0?y(r.total_yi):y0;
+    const c=r.total_yi>0?'#BD2F1D':(r.total_yi<0?'#307927':'#88837C');
+    s+=`<rect class="bar" data-i="${i}" x="${x(i)-bw/2}" y="${top}" width="${bw}" height="${Math.max(h,1)}" fill="${c}"/>`;
+    if(i%5===0||i===recs.length-1){
+      s+=`<text x="${x(i)}" y="${H-12}" text-anchor="middle" font-size="14">${r.date.slice(5)}</text>`;
+    }
+  });
+  // 绝对值参考线 ±50 / ±100
+  [[50,'+50','#BD2F1D'],[100,'+100','#BD2F1D'],[-50,'-50','#307927'],[-100,'-100','#307927']].forEach(([v,lb,c])=>{
+    s+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="#10101066" stroke-width="1" stroke-dasharray="5,4"/>`;
+    s+=`<text x="${W-P.r+6}" y="${y(v)+4}" font-size="12" text-anchor="start" fill="${c}">${lb}</text>`;
+  });
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.innerHTML=s;
+  document.getElementById('chart-note').innerHTML='虚线 = 绝对值判定线 <span style="color:#BD2F1D">+50亿（疑似）</span> 与 <span style="color:#BD2F1D">+100亿（大概率）</span> ／ <span style="color:#307927">-50亿（疑似）</span> 与 <span style="color:#307927">-100亿（大概率）</span>。柱子越过同侧虚线即触发对应信号。';
+  // tooltip
+  const tip=document.getElementById('tooltip');
+  svg.querySelectorAll('.bar').forEach(b=>{
+    b.addEventListener('mousemove',e=>{
+      const r=recs[+b.dataset.i];
+      tip.style.display='block';
+      tip.style.left=(e.clientX+14)+'px';
+      tip.style.top=(e.clientY-10)+'px';
+      const v=r.verdict==='无动作'?'未见明显动作':(r.confidence+r.verdict);
+      const cats=r.cats.map(c=>`${c.cat} ${c.flow_yi===null?'—':fmt(c.flow_yi,1)}`).join('\n');
+      tip.textContent=`${r.date} ｜ 合计 ${fmt(r.total_yi,2)} 亿\n${cats}\n${v}`;
+    });
+    b.addEventListener('mouseleave',()=>tip.style.display='none');
+  });
+})();
+
+/* ---------- 篮子渲染 ---------- */
+(function(){
+  const cats=['上证50','沪深300','中证500','中证1000','中证2000','科创50'];
+  let h='';
+  cats.forEach(cat=>{
+    const items=Object.entries(DATA.basket).filter(([k,v])=>v.cat===cat)
+      .sort((a,b)=>b[1].aum_yi-a[1].aum_yi);
+    h+=`<div class="bk-row"><div class="bk-cat">${cat}</div><div class="bk-items">`;
+    items.forEach(([code,v])=>{
+      h+=`<div class="bk-item"><span class="cd">${code}</span><span class="nm">${v.name}</span><span class="sz">${v.aum_yi}亿</span></div>`;
+    });
+    for(let i=items.length;i<10;i++){h+=`<div class="bk-item"></div>`;}
+    h+='</div></div>';
+  });
+  document.getElementById('basket').innerHTML=h;
+})();
+
+/* ---------- 分类热力表 ---------- */
+(function(){
+  const hb=document.getElementById('heatbody');
+  const allV=[];
+  DATA.records.forEach(r=>r.cats.forEach(c=>{if(c.flow_yi!==null)allV.push(Math.abs(c.flow_yi));}));
+  allV.sort((a,b)=>a-b);
+  const ref=allV[Math.floor(allV.length*0.95)]||1;
+  const shade=v=>{
+    if(v===null)return '';
+    const a=Math.min(Math.abs(v)/ref,1);
+    const alpha=(0.08+a*0.62).toFixed(2);
+    return v>0?`background:rgba(189,47,29,${alpha});color:${a>0.55?'#F3EEE5':'#BD2F1D'}`
+             :`background:rgba(48,121,39,${alpha});color:${a>0.55?'#F3EEE5':'#307927'}`;
+  };
+  DATA.records.forEach(r=>{
+    const tr=document.createElement('tr');
+    let tds=`<td>${r.date.slice(2)}</td>`;
+    r.cats.forEach(c=>{
+      tds+=`<td style="${shade(c.flow_yi)}">${c.flow_yi===null?'—':fmt(c.flow_yi,1)}</td>`;
+    });
+    tds+=`<td class="${cls(r.total_yi)}" style="font-weight:700;${shade(r.total_yi)}">${arrow(r.total_yi)} ${fmt(r.total_yi,1)}</td>`;
+    tr.innerHTML=tds;
+    hb.appendChild(tr);
+  });
+})();
+
+/* ---------- 明细表 ---------- */
+(function(){
+  const tb=document.getElementById('tbody');
+  DATA.records.forEach((r,idx)=>{
+    const vTxt=r.verdict==='无动作'?'未见明显动作':(r.confidence+'·'+(r.verdict==='买了'?'净买入':'净卖出'));
+    const vCls=r.verdict==='买了'?'buy':(r.verdict==='卖了'?'sell':'flat');
+    const tr=document.createElement('tr');
+    tr.className='dayrow';
+    tr.innerHTML=`
+      <td><span class="arrow">▶</span></td>
+      <td>${r.date}</td>
+      <td><span class="chip ${vCls}">${vTxt}</span></td>
+      <td class="${cls(r.total_yi)}">${arrow(r.total_yi)} ${fmt(r.total_yi,2)}</td>
+      <td class="${r.buy_count?'buy':''}">${r.buy_count} 只</td>
+      <td class="${r.sell_count?'sell':''}">${r.sell_count} 只</td>
+      <td>${r.etf_count}/29</td>`;
+    tb.appendChild(tr);
+    const dt=document.createElement('tr');
+    dt.className='detail';
+    dt.style.display='none';
+    const catHead=r.cats.map(c=>`
+      <div class="etf-cell" style="background:#1010100d">
+        <div class="nm" style="letter-spacing:.15em">${c.cat}<span class="tag">分类汇总</span></div>
+        <div class="row2"><span class="${c.flow_yi===null?'na':cls(c.flow_yi)}" style="font-weight:700">${c.flow_yi===null?'—':arrow(c.flow_yi)+' '+fmt(c.flow_yi,2)+' 亿'}</span><span>${c.n_have}/${c.n_total} 只</span></div>
+      </div>`).join('');
+    const cells=catHead+r.etfs.map(e=>{
+      if(e.flow_yi===null) return `<div class="etf-cell"><div class="nm">${e.name}<span class="tag">${e.index}</span></div><div class="row2"><span class="na">数据待更新</span></div></div>`;
+      return `<div class="etf-cell">
+        <div class="nm">${e.name}<span class="tag">${e.index}</span></div>
+        <div class="row2"><span class="${cls(e.flow_yi)}">${arrow(e.flow_yi)} ${fmt(e.flow_yi,2)} 亿</span><span class="${cls(e.pct)}">份额 ${fmt(e.pct,2)}%</span></div>
+        <div class="row2" style="color:#88837C"><span>份额变动 ${fmt(e.d_shares_wan,0)} 万份</span><span>${e.code}</span></div>
+      </div>`;
+    }).join('');
+    dt.innerHTML=`<td colspan="7"><div class="detail-inner">${cells}</div></td>`;
+    tb.appendChild(dt);
+    tr.addEventListener('click',()=>{
+      const open=dt.style.display!=='none';
+      document.querySelectorAll('tr.detail').forEach(x=>x.style.display='none');
+      document.querySelectorAll('tr.dayrow').forEach(x=>x.classList.remove('open'));
+      if(!open){dt.style.display='';tr.classList.add('open');}
+    });
+  });
+})();
+</script>
+</body>
+</html>

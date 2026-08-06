@@ -1,0 +1,8 @@
+# 抓取过程中的原始数据（含版权风险，勿提交）
+data/
+etf_*.csv
+
+# 系统文件
+.DS_Store
+__pycache__/
+*.pyc
