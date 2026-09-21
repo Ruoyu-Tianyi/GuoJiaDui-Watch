@@ -1,10 +1,10 @@
-# GuoJiaDui-Watch
+# GUOJIADUI MONITER
 
 > **项目状态：静态展示版**
 >
 > 保留截至 2026-07-27 的历史快照（生成于 2026-07-28），不自动更新。前端托管于 Vercel，无运行时后端、数据库或 API 密钥依赖。
 
-在线访问：**https://guojiadui-watch.vercel.app**
+在线访问：**https://gjd-monitor.vercel.app**
 
 ## Vercel 部署
 
