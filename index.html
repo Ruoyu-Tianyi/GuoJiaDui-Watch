@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>国家队今天买了吗？—— 宽基ETF申赎监测</title>
+<title>国家队今天买了吗？—— 宽基ETF申赎历史展示</title>
+<meta name="description" content="以29只宽基ETF申赎观察市场资金动向。历史静态快照，包含分类热力表与逐日明细，不提供实时行情。">
 <style>
   :root{
     --paper:#F3EEE5;
@@ -505,31 +506,41 @@
     .masthead .brand{letter-spacing:.18em;font-size:.66rem;}
     .masthead .author{font-size:.6rem;}
   }
+
+  /* 静态展示采用连续滚动，适配触摸与键盘。 */
+  #screen-home {height:auto;min-height:calc(100svh - 60px);overflow:visible;}
+  #screen-home .verdict-hero {padding-top:1rem;padding-bottom:1rem;}
+  #screen-data {position:relative;inset:auto;transform:none;opacity:1;pointer-events:auto;overflow:visible;}
+  button.pager-hint,button.pager-top {display:block;width:100%;background:transparent;color:inherit;border:0;font-family:inherit;cursor:pointer;}
+  :focus-visible {outline:2px solid var(--red);outline-offset:4px;}
+  .bk-items {min-width:0;}
+  .bk-item {min-width:0;}
+  @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto;}*,*::before,*::after{animation:none!important;transition:none!important;}}
 </style>
 </head>
-<body class="lock">
+<body>
 
 <div class="masthead">
   <div class="left"><span class="brand">GUOJIADUI WATCH</span><span class="author">作者：若瑜 ｜ Email：<a href="mailto:ruoyu_tianyi@163.com">ruoyu_tianyi@163.com</a> ｜ <a class="gh" href="https://github.com/Ruoyu-Tianyi/GuoJiaDui-Watch" target="_blank" rel="noopener" aria-label="GitHub: GuoJiaDui-Watch"><svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></a></span></div>
   <div class="right" id="mh-date"></div>
 </div>
 
-<div id="screen-home">
+<div id="screen-home" tabindex="-1">
 <div class="titleblock">
-  <div class="kicker">宽基ETF申赎 · 每日监测</div>
+  <div class="kicker">宽基ETF申赎 · 历史静态展示</div>
   <h1>国家队今天买了吗？</h1>
-  <div class="sub">以汇金核心持仓宽基ETF的异常申购赎回为信号，推测"国家队"的每日动向</div>
+  <div class="sub">以宽基ETF的异常申购赎回为观察信号 · 数据截至 2026-07-27 · 不自动更新</div>
 </div>
 
 <div class="verdict-hero" id="hero"></div>
 
 <div class="rule" id="rule"></div>
 
-<div class="pager-hint" id="go-data"><span>查看近30日数据与明细</span><span class="chev">﹀</span></div>
+<button type="button" class="pager-hint" id="go-data"><span>查看快照中的30个交易日与明细</span><span class="chev">﹀</span></button>
 </div><!-- /screen-home -->
 
-<div id="screen-data">
-<div class="pager-top" id="go-home"><span class="chev">︿</span><span>返回今日裁决</span></div>
+<div id="screen-data" tabindex="-1">
+<button type="button" class="pager-top" id="go-home"><span class="chev">︿</span><span>返回快照结论</span></button>
 
 <div class="section-head">
   <h2>近30个交易日 · 汇总净申赎</h2>
@@ -592,7 +603,7 @@
     <ol>
       <li>每日净申赎估算：<code>T = Σ(当日份额变动 × 当日估算净值)</code>，单位亿元；净值以"规模÷份额"近似。分方向呈现：上证50 / 沪深300 / 中证500 / 中证1000 / 中证2000 / 科创50 各自前5大ETF的分类净申赎。</li>
       <li>绝对值法判定：<code>T ≥ +100亿</code> → "大概率买了"；<code>+50亿 ≤ T &lt; +100亿</code> → "疑似净买入"；<code>T ≤ -100亿</code> → "大概率卖了"；<code>-100亿 &lt; T ≤ -50亿</code> → "疑似净卖出"；<code>|T| &lt; 50亿</code> → "未见明显动作"。</li>
-      <li>ETF份额数据于<strong>T+1</strong>披露，故本站结论始终对应"最近一个有完整数据的交易日"。</li>
+      <li>ETF份额数据于<strong>T+1</strong>披露。本展示保留历史快照，结论对应快照内的交易日，不代表今日动向。</li>
     </ol>
   </div>
   <div>
@@ -607,7 +618,7 @@
   <div>数据来源：恒生聚源 Gildata · ETF基金份额变动（截至2026-07-27）<br>
   <span style="font-size:.66rem">热力表单位：亿元 · 深红=大额净申购 / 深绿=大额净赎回 / "—"=当日数据未更新</span><br>
   <span style="font-size:.66rem">权利声明：本站由若瑜（Ruoyu-Tianyi）制作并保留所有权利；页面内容仅供学习与研究参考，版权归作者所有，未经许可不得用于商业用途。</span></div>
-  <div><a class="u" href="#" id="foot-home">回到今日结论</a> · GUOJIADUI WATCH</div>
+  <div><a class="u" href="#" id="foot-home">回到快照结论</a> · GUOJIADUI WATCH</div>
 </footer>
 </div><!-- /screen-data -->
 
@@ -629,8 +640,8 @@ const arrow = v => v>0?'▲':(v<0?'▼':'');
   const confTxt = r.confidence ? (r.confidence==='大概率'?'大概率':'疑似信号') : '信号不足';
   const missing = r.etfs.filter(e=>e.flow_yi===null).map(e=>e.code);
   document.getElementById('hero').innerHTML = `
-    <div class="q">${r.date} · 最近交易日裁决</div>
-    <div class="verdict-big ${vCls}">${r.verdict==='无动作'?'国家队今天'+vTxt:'国家队今天'+vTxt}</div>
+    <div class="q">${r.date} · 历史快照结论</div>
+    <div class="verdict-big ${vCls}">国家队当日${vTxt}</div>
     <div><span class="verdict-conf ${vCls}">${confTxt}</span></div>
     <div class="verdict-stats">
       <div class="vstat"><div class="num ${cls(r.total_yi)}">${fmt(r.total_yi)}</div><div class="lbl">29只ETF汇总净申赎（亿元，估算）</div></div>
@@ -652,34 +663,15 @@ const arrow = v => v>0?'▲':(v<0?'▼':'');
     </div>`;
 })();
 
-/* ---------- 双屏翻页 ---------- */
-(function(){
-  const body=document.body;
-  const data=document.getElementById('screen-data');
-  const show=d=>{
-    body.classList.toggle('show-data',d);
-    body.classList.toggle('lock',!d);
-    if(d){ data.scrollTop=0; }
-  };
-  document.getElementById('go-data').addEventListener('click',()=>show(true));
-  document.getElementById('go-home').addEventListener('click',()=>show(false));
-  document.getElementById('foot-home').addEventListener('click',e=>{e.preventDefault();show(false);});
-  let lockT=0;
-  const tryFlip=dy=>{
-    const now=Date.now();
-    if(now-lockT<750) return;
-    if(!body.classList.contains('show-data') && dy>40){ show(true); lockT=now; }
-    else if(body.classList.contains('show-data') && data.scrollTop<=0 && dy<-40){ show(false); lockT=now; }
-  };
-  window.addEventListener('wheel',e=>tryFlip(e.deltaY),{passive:true});
-  let ty=null;
-  window.addEventListener('touchstart',e=>{ty=e.touches[0].clientY;},{passive:true});
-  window.addEventListener('touchend',e=>{
-    if(ty===null) return;
-    const dy=ty-e.changedTouches[0].clientY; ty=null;
-    tryFlip(dy>0?dy+20:dy-20); // 触摸略降门槛
-  },{passive:true});
-})();
+/* ---------- 页面导航 ---------- */
+const navigateTo = id => {
+  const target = document.getElementById(id);
+  target.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
+  target.focus({preventScroll:true});
+};
+document.getElementById('go-data').addEventListener('click',()=>navigateTo('screen-data'));
+document.getElementById('go-home').addEventListener('click',()=>navigateTo('screen-home'));
+document.getElementById('foot-home').addEventListener('click',e=>{e.preventDefault();navigateTo('screen-home');});
 
 /* ---------- 规则条 ---------- */
 document.getElementById('rule').innerHTML = `
@@ -748,7 +740,7 @@ document.getElementById('rule').innerHTML = `
     items.forEach(([code,v])=>{
       h+=`<div class="bk-item"><span class="cd">${code}</span><span class="nm">${v.name}</span><span class="sz">${v.aum_yi}亿</span></div>`;
     });
-    for(let i=items.length;i<10;i++){h+=`<div class="bk-item"></div>`;}
+
     h+='</div></div>';
   });
   document.getElementById('basket').innerHTML=h;
@@ -788,6 +780,10 @@ document.getElementById('rule').innerHTML = `
     const vCls=r.verdict==='买了'?'buy':(r.verdict==='卖了'?'sell':'flat');
     const tr=document.createElement('tr');
     tr.className='dayrow';
+    tr.tabIndex=0;
+    tr.setAttribute('aria-expanded','false');
+    tr.setAttribute('aria-label',r.date+' 申赎明细');
+    tr.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();tr.click();}});
     tr.innerHTML=`
       <td><span class="arrow">▶</span></td>
       <td>${r.date}</td>
@@ -818,8 +814,8 @@ document.getElementById('rule').innerHTML = `
     tr.addEventListener('click',()=>{
       const open=dt.style.display!=='none';
       document.querySelectorAll('tr.detail').forEach(x=>x.style.display='none');
-      document.querySelectorAll('tr.dayrow').forEach(x=>x.classList.remove('open'));
-      if(!open){dt.style.display='';tr.classList.add('open');}
+      document.querySelectorAll('tr.dayrow').forEach(x=>{x.classList.remove('open');x.setAttribute('aria-expanded','false');});
+      if(!open){dt.style.display='';tr.classList.add('open');tr.setAttribute('aria-expanded','true');}
     });
   });
 })();

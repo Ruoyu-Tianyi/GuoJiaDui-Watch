@@ -1,8 +1,22 @@
-# GuoJiaDui-Watch [ARCHIVED — Demo]
+# GuoJiaDui-Watch
 
-> **项目状态：已封存（Archive）**
-> 
-> 本仓库当前作为 Demo 永久封存，不再执行自动数据更新。以下 README 保留原始功能说明，并在末尾补充了后续后端部署计划与重启路径。
+> **项目状态：静态展示版**
+>
+> 保留截至 2026-07-27 的历史快照（生成于 2026-07-28），不自动更新。前端托管于 Vercel，无运行时后端、数据库或 API 密钥依赖。
+
+在线访问：**https://guojiadui-watch.vercel.app**
+
+## Vercel 部署
+
+- Framework Preset：Other
+- Build Command：`node scripts/build.mjs`
+- Output Directory：`public`
+- 配置已写入 `vercel.json`，构建仅复制 `index.html`，不会发布抓取脚本或 CSV。
+- 本地构建：`node scripts/build.mjs`
+- 本地预览：`python -m http.server 8000 --directory public`
+- 关联项目后部署：`npx vercel --prod`
+
+Supabase 不参与当前静态展示；以下后端计划仅供未来参考。
 
 ---
 
@@ -80,7 +94,7 @@ MIT — 页面与代码可自由使用，数据部分请遵守聚源相关协议
 
 ## 后端后续部署计划 & 重启路径
 
-本项目当前作为 Demo 封存，**原 Kimi Work 定时 Automation 已取消**。若未来决定重启，建议按以下路径演进：
+本项目当前以静态展示版恢复上线，**原 Kimi Work 定时 Automation 已取消**。若未来决定重启，建议按以下路径演进：
 
 ### 阶段一：零成本自动化（推荐优先实现）
 

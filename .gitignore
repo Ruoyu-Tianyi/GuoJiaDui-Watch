@@ -6,3 +6,8 @@ etf_*.csv
 .DS_Store
 __pycache__/
 *.pyc
+.vercel/
+public/
+node_modules/
+.env*
+
